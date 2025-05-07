@@ -107,6 +107,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	@Override 
 	public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
 		resetHistory();
+
 		return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
 	}
 
@@ -129,8 +130,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	}
 
 	/** 
-	 * Finds the optimal edit based on current algorithm phase 
-	 * and adjacency size.
+	 * Finds the optimal edit based on current algorithm phase and adjacency size.
 	 * @param onlyAllowedEdits if true, only allowed edits are considered
 	 * @param onlyPositiveEdits if true, only positive edits are considered
 	 * @return LearningEditProposal
@@ -159,34 +159,58 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 * Find the best edit by evaluating separation sets for node pairs.
 	 * This method iterates through all nodes and their neighbors,
 	 * calculating the best separation set for each pair.
+	 * 
+	 * @param adjacencySize
+	 * @param onlyAllowedEdits
+	 * @param onlyPositiveEdits
+	 * @return
+	 * @throws NodeNotFoundException
 	 */
 	private LearningEditProposal findBestEditInCurrentPhase(int adjacencySize,
 															boolean onlyAllowedEdits,
-															boolean onlyPositiveEdits) throws NodeNotFoundException {
-		for (Node nodeX : probNet.getNodes()) {
-			for (Node nodeY : nodeX.getSiblings()) {
-				List<Node> adjacencySubset = new ArrayList<>(nodeX.getNeighbors());
-				adjacencySubset.remove(nodeY);
+															boolean onlyPositiveEdits) 
+																	throws NodeNotFoundException {
+		
+        switch (phase) {
+        case INITIAL_PHASE:
+            // Existing separation-set evaluation logic
+            for (Node nodeX : probNet.getNodes()) {
+                for (Node nodeY : nodeX.getSiblings()) {
+    				List<Node> adjacencySubset = new ArrayList<>(nodeX.getNeighbors());
+    				adjacencySubset.remove(nodeY);
 
-				RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(probNet, nodeX.getVariable(),
-						nodeY.getVariable(), false);
+    				RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(probNet, nodeX.getVariable(),
+    						nodeY.getVariable(), false);
 
-				if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
-					PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
+    				if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
+    					PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
 
-					// Evaluate separation sets if not already cached or needs recalculation
-					if (motivation == null || (motivation.getScore() != ALREADY_DONE
-							&& motivation.getSeparationSet().size() > adjacencySize)) {
-						evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
-					}
-				}
-			}
-		}
-		return getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
+    					// Evaluate separation sets if not already cached or needs recalculation
+    					if (motivation == null || (motivation.getScore() != ALREADY_DONE
+    							&& motivation.getSeparationSet().size() > adjacencySize)) {
+    						evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
+    					}
+    				}
+                }
+            }
+            return getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
+
+        case HEAD_TO_HEAD_ORIENTATION:
+            return getOrientationEdit(onlyAllowedEdits);
+
+        case REMAINING_LINKS_ORIENTATION:
+            return orientRemainingLinks(onlyAllowedEdits);
+
+        default:
+            return null;
+    }
 	}
 
 	/**
 	 * Transition to next phase when no more edits are possible
+	 * 
+	 * @param onlyAllowedEdits
+	 * @return
 	 */
 	private LearningEditProposal transitionToNextPhase(boolean onlyAllowedEdits) {
 		if (lastRemovedEdits.isEmpty()) {
@@ -197,7 +221,17 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		return null;
 	}
 
-	 private void evaluateSeparationSets(Node nodeX, Node nodeY, List<Node> adjacencySubset, int adjacencySize, boolean onlyPositiveEdits) throws NodeNotFoundException{
+	 /**
+	  * Evaluates separation sets for a given pair of nodes and updates the cache.
+	  * 
+	 * @param nodeX 
+	 * @param nodeY
+	 * @param adjacencySubset 
+	 * @param adjacencySize
+	 * @param onlyPositiveEdits
+	 * @throws NodeNotFoundException
+	 */
+	private void evaluateSeparationSets(Node nodeX, Node nodeY, List<Node> adjacencySubset, int adjacencySize, boolean onlyPositiveEdits) throws NodeNotFoundException{
 		double bestScore = 0.0;
 		List<Node> bestScoreSeparationSet = null;
 
@@ -214,6 +248,13 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		}
 	}
 
+	/**
+	 * Returns the optimal edit from the cache. 
+	 * @param onlyAllowedEdits
+	 * @param onlyPositiveEdits
+	 * @return LearningEditProposal 
+	 * @throws NodeNotFoundException
+	 */
 	public LearningEditProposal getOptimalEditFromCache(boolean onlyAllowedEdits, boolean onlyPositiveEdits)
 			throws NodeNotFoundException {
 		PCEditMotivation bestMotivation = null;
@@ -240,7 +281,15 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		return bestEditProposal;
 	}
 
-	private boolean isValidEdit(RemoveLinkEdit removeLinkEdit, PCEditMotivation bestMotivation, boolean onlyAllowedEdits) {
+	/**
+	 * 
+	 * @param removeLinkEdit
+	 * @param bestMotivation
+	 * @param onlyAllowedEdits
+	 * @return true if the edit is valid, false otherwise
+	 */
+	private boolean isValidEdit(RemoveLinkEdit removeLinkEdit, PCEditMotivation bestMotivation, 
+			boolean onlyAllowedEdits) {
 		return !isBlocked(new LearningEditProposal(removeLinkEdit, bestMotivation)) &&
 				!alreadyConsidered(removeLinkEdit, lastRemovedEdits) &&
 				(!onlyAllowedEdits || isAllowed(removeLinkEdit));
@@ -252,7 +301,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 * If the "head to head" orientations have not been done, then, the
 	 * DirectLinkEdit contains these edits. Else, it contains the remaining
 	 * orientations.
-	 * @return the orientation edit
+	 *
+	 * @param onlyAllowedEdits
+	 * @return LearningEditProposal the orientation edit
 	 */
 	public LearningEditProposal getOrientationEdit(boolean onlyAllowedEdits) {
 		LearningEditProposal bestEdit = null;
@@ -266,7 +317,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 					return orientRemainingLinks(onlyAllowedEdits);
 				}
 			}
-		} catch (NodeNotFoundException | NonProjectablePotentialException | WrongCriterionException e) {
+		} catch (NodeNotFoundException e) {
 			e.printStackTrace();
 		}
 
@@ -274,7 +325,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	}
 
 	/**
-	 * @return the node with the maximum number of neighbors in the probNet.
+	 * @return int The number of neighbors of the node with the maximum  
 	 */
 	private int maxOfAdjacencies() {
 		int max = 0;
@@ -353,17 +404,30 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 * Given a RemoveLinkEdit, this method returns the same link with the inverse
 	 * direction. For example, if the parameter edit is a RemoveLinkEdit A-&gt;B,
 	 * it returns the RemoveLinkEdit B-&gt;A
+	 *
+	 * @param edit RemoveLinkEdit to be inverted
+	 * @return RemoveLinkEdit with the inverse direction 
 	 */
 	public RemoveLinkEdit inverseEdit(RemoveLinkEdit edit) {
 		return new RemoveLinkEdit(probNet, edit.getVariable2(), edit.getVariable1(), false);
 	}
 
+	/**
+	 * @param edit
+	 * @param consideredEdits
+	 * @return true if the edit has already been considered, false otherwise
+	 */
 	public boolean alreadyConsidered(BaseLinkEdit edit, Set<PNEdit> consideredEdits) {
 		BaseLinkEdit inverseEdit = new RemoveLinkEdit(probNet, edit.getVariable2(), edit.getVariable1(),
 				edit.isDirected());
 		return consideredEdits.contains(edit) || consideredEdits.contains(inverseEdit);
 	}
 
+	/**
+	 * @param edit1
+	 * @param edit2
+	 * @return true if the edits have already been considered, false otherwise
+	 */
 	public boolean alreadyConsidered(OrientLinkEdit edit1, OrientLinkEdit edit2) {
 		boolean result = false;
 
@@ -390,6 +454,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 * Method to compute the first stage of the orientation. For each
 	 * uncoupled meeting X - Y - Z if Y does not pertain to the separation
 	 * set of X and Z, we should orient X -&gt; Y &lt;- Z.
+	 *
+	 * @param onlyAllowedEdits
+	 * @return LearningEditProposal
+	 * @throws NodeNotFoundException
 	 */
 	private LearningEditProposal orientHeadToHeadLinks(boolean onlyAllowedEdits) throws NodeNotFoundException {
 
@@ -448,7 +516,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 * @throws NonProjectablePotentialException
 	 */
 	private LearningEditProposal orientRemainingLinks(boolean onlyAllowedEdits)
-			throws NodeNotFoundException, NonProjectablePotentialException, WrongCriterionException {
+			throws NodeNotFoundException {
 		boolean change = true, change2 = true, oriented, skip;
 		Node nodeX, nodeZ;
 		List<Node> siblingsNodeZ;
@@ -596,6 +664,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		return null;
 	}
 
+	/**
+	 * @param orientLinkEdit
+	 * @return true if the orientation is allowed, false otherwise
+	 */
 	private boolean isOrientationAllowed(OrientLinkEdit orientLinkEdit) {
 		Node sourceNode = probNet.getNode(orientLinkEdit.getVariable1());
 		Node destinationNode = probNet.getNode(orientLinkEdit.getVariable2());
@@ -687,6 +759,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		resetHistory();
 	}
 
+	/**
+	 * Returns the motivation of the edit. The motivation is a string
+	 */
 	public LearningEditMotivation getMotivation(PNEdit edit) {
 		Node nodeX, nodeY, nodeZ;
 		LearningEditMotivation motivation = null;
@@ -719,6 +794,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		return (phase.ordinal() >= Phase.REMAINING_LINKS_ORIENTATION.ordinal());
 	}
 
+	/**
+	 * Clears the edits history: lastRemovedEdits, lastOrientationEdits, lastCompoundOrientationEdits
+	 */
 	protected void resetHistory() {
 		lastRemovedEdits.clear();
 		lastOrientationEdits.clear();
