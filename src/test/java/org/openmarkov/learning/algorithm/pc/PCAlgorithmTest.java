@@ -7,10 +7,7 @@
 
 package org.openmarkov.learning.algorithm.pc;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.openmarkov.core.exception.NodeNotFoundException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
@@ -18,6 +15,7 @@ import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.core.model.network.potential.TablePotential;
+import org.openmarkov.core.test.TestSpeed;
 import org.openmarkov.io.database.excel.CSVDataBaseIO;
 import org.openmarkov.io.probmodel.reader.PGMXReader_0_2;
 import org.openmarkov.learning.algorithm.pc.independencetester.CrossEntropyIndependenceTester;
@@ -147,7 +145,8 @@ public class PCAlgorithmTest {
 		Assertions.assertEquals(0.8585657, probabilities[6], maxError);
 		Assertions.assertEquals(0.1414342, probabilities[7], maxError);
 	}
-
+	
+	@Tag(TestSpeed.MEDIUM)
 	@Test public void testAsia10k() throws Exception {
 		CSVDataBaseIO csvReader = new CSVDataBaseIO();
 		CaseDatabase asiaDatabase = csvReader.load(getClass().getResource(asiaDatabaseFilename).getFile());
@@ -253,7 +252,8 @@ public class PCAlgorithmTest {
 		Assertions.assertFalse(nodeXRay.isParent(nodeDyspnea));
 
 	}
-
+	
+	@Tag(TestSpeed.SLOW)
 	@Test public void testAlarm500() throws Exception {
 
 		CSVDataBaseIO csvReader = new CSVDataBaseIO();
