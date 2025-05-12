@@ -156,7 +156,7 @@ public abstract class Metric implements PNUndoableEditListener {
 		 * and store the node dimension and entropy to avoid repeating the
 		 * calculations */
 		if (change) {
-			cachedNodeScores.put(destinationNode.getName(), new Double(newNodeScore));
+			cachedNodeScores.put(destinationNode.getName(), newNodeScore);
 		}
 
 		return newNodeScore - lastNodeScore;
@@ -189,7 +189,7 @@ public abstract class Metric implements PNUndoableEditListener {
 		 * and store the node dimension and entropy to avoid repeating the
 		 * calculations */
 		if (change) {
-			cachedNodeScores.put(destinationNode.getName(), new Double(newNodeScore));
+			cachedNodeScores.put(destinationNode.getName(), newNodeScore);
 		}
 
 		return newNodeScore - lastNodeScore;
@@ -223,7 +223,7 @@ public abstract class Metric implements PNUndoableEditListener {
 		 * calculations
 		 */
 		if (change) {
-			cachedNodeScores.put(initialDestinationNode.getName(), new Double(newNodeScore));
+			cachedNodeScores.put(initialDestinationNode.getName(), newNodeScore);
 		}
 		result = newNodeScore - lastNodeScore;
 		lastNodeScore = cachedNodeScores.get(((Node) initialOriginNode).getName());
@@ -236,7 +236,7 @@ public abstract class Metric implements PNUndoableEditListener {
 		 * calculations
 		 */
 		if (change) {
-			cachedNodeScores.put(initialOriginNode.getName(), new Double(newNodeScore));
+			cachedNodeScores.put(initialOriginNode.getName(), newNodeScore);
 		}
 		result += (newNodeScore - lastNodeScore);
 		return result;
@@ -256,7 +256,7 @@ public abstract class Metric implements PNUndoableEditListener {
 
 		/* Store the entropy of the node to avoid repeating the calculations */
 		if (change) {
-			cachedNodeScores.put(node.getName(), new Double(nodeScore));
+			cachedNodeScores.put(node.getName(), nodeScore);
 		}
 		return nodeScore;
 	}
