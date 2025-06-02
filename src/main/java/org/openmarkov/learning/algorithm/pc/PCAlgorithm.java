@@ -173,26 +173,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		
         switch (phase) {
         case INITIAL_PHASE:
-            // Existing separation-set evaluation logic
-            for (Node nodeX : probNet.getNodes()) {
-                for (Node nodeY : nodeX.getSiblings()) {
-    				List<Node> adjacencySubset = new ArrayList<>(nodeX.getNeighbors());
-    				adjacencySubset.remove(nodeY);
-
-    				RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(probNet, nodeX.getVariable(),
-    						nodeY.getVariable(), false);
-
-    				if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
-    					PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
-
-    					// Evaluate separation sets if not already cached or needs recalculation
-    					if (motivation == null || (motivation.getScore() != ALREADY_DONE
-    							&& motivation.getSeparationSet().size() > adjacencySize)) {
-    						evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
-    					}
-    				}
-                }
-            }
+        	separationSetsLogic(adjacencySize, onlyPositiveEdits);
             return getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
 
         case HEAD_TO_HEAD_ORIENTATION:
@@ -204,6 +185,39 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         default:
             return null;
     }
+	}
+	
+	/**
+	 * Logic for evaluating separation sets in the INITIAL_PHASE.
+	 * This method iterates through all nodes and their neighbors,
+	 * calculating the best separation set for each pair of nodes.
+	 *
+	 * @param adjacencySize Size of the adjacency set to consider
+	 * @param onlyPositiveEdits If true, only positive edits are considered
+	 * @throws NodeNotFoundException If a node is not found in the network
+	 */
+	private void separationSetsLogic(int adjacencySize, boolean onlyPositiveEdits) throws NodeNotFoundException {
+        // Existing separation-set evaluation logic
+        for (Node nodeX : probNet.getNodes()) {
+            for (Node nodeY : nodeX.getSiblings()) {
+				List<Node> adjacencySubset = new ArrayList<>(nodeX.getNeighbors());
+				adjacencySubset.remove(nodeY);
+
+				RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(
+						probNet, nodeX.getVariable(), nodeY.getVariable(), false);
+
+				if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
+					PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
+
+					// Evaluate separation sets if not already cached or needs recalculation
+					if (motivation == null || (motivation.getScore() != ALREADY_DONE
+							&& motivation.getSeparationSet().size() > adjacencySize)) {
+						evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
+					}
+				}
+            }
+        }
+		
 	}
 
 	/**
@@ -464,7 +478,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 		List<Node> neighborhoodX, neighborhoodY;
 		COrientLinksEdit compoundDirectLinkEdit;
 		OrientLinkEdit orientLinkEdit1, orientLinkEdit2;
-		StringEditMotivation motivation;
+		StringEditMotivation stringMotivation;
 
 		for (Node nodeX : probNet.getNodes()) {
 			neighborhoodX = nodeX.getSiblings();
@@ -476,8 +490,13 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 					//Adjacent nodeX and nodeZ?
 					if (!nodeX.getNeighbors().contains(nodeZ)) {
 						// if Y is not included in the separation set of X and Z
-						List<Node> separationXZ = cache.get(nodeX).get(nodeZ).getSeparationSet();
-						if (!separationXZ.contains(nodeY)) {
+						PCEditMotivation motivation = cache.get(nodeX).get(nodeZ);
+						List<Node> separationXZ = (motivation != null) ? motivation.getSeparationSet() : null;
+						if (separationXZ == null) {
+							System.out.println("Warning: Separation set for " + nodeX.getName() + " and "
+									+ nodeZ.getName() + " is null. This may indicate an issue with the independence test.");
+						}
+						if (separationXZ == null || !separationXZ.contains(nodeY)) {
 							//Then orient X->;Y<-Z
 							orientLinkEdit1 = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeY.getVariable(),
 									true);
@@ -486,18 +505,18 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 							compoundDirectLinkEdit = new COrientLinksEdit(probNet, new Vector<>());
 							compoundDirectLinkEdit.addEdit(orientLinkEdit1);
 							compoundDirectLinkEdit.addEdit(orientLinkEdit2);
-							motivation = new StringEditMotivation(
+							stringMotivation = new StringEditMotivation(
 									"Sep. set (" + nodeX.getName() + ", " + nodeZ.getName()
-											+ ") does not contain variable: " + nodeY.getName());
+									+ ") does not contain variable: " + nodeY.getName());
 							if (!alreadyConsidered(orientLinkEdit1, orientLinkEdit2) && !isBlocked(
-									new LearningEditProposal(compoundDirectLinkEdit, motivation)) && (
-									!onlyAllowedEdits || (
-											isOrientationAllowed(orientLinkEdit1) && isOrientationAllowed(
-													orientLinkEdit2)
-									)
-							)) {
+									new LearningEditProposal(compoundDirectLinkEdit, stringMotivation)) && (
+											!onlyAllowedEdits || (
+													isOrientationAllowed(orientLinkEdit1) && isOrientationAllowed(
+															orientLinkEdit2)
+													)
+											)) {
 								lastCompoundOrientationEdits.add(compoundDirectLinkEdit);
-								return new LearningEditProposal(compoundDirectLinkEdit, motivation);
+								return new LearningEditProposal(compoundDirectLinkEdit, stringMotivation);
 							}
 						}
 					}
@@ -517,149 +536,209 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 	 */
 	private LearningEditProposal orientRemainingLinks(boolean onlyAllowedEdits)
 			throws NodeNotFoundException {
-		boolean change = true, change2 = true, oriented, skip;
-		Node nodeX, nodeZ;
-		List<Node> siblingsNodeZ;
 		OrientLinkEdit orientLinkEdit = null;
 		LearningEditProposal editProposal;
 
-		while (change2) {
-			change2 = false;
-			while (change) {
-				change = false;
-				for (Link<Node> link : probNet.getLinks()) {
-					nodeX = link.getNode1();
-					nodeZ = link.getNode2();
-					if (link.isDirected()) {   // X--&gt;Z
-						for (Node nodeY : nodeZ.getSiblings()) {
-							orientLinkEdit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(),
-									true);
-							editProposal = new LearningEditProposal(orientLinkEdit,
-									new StringEditMotivation("Do not create cycles"));
-							if (!nodeY.getNeighbors().contains(nodeX) && !alreadyConsidered(orientLinkEdit,
-									lastOrientationEdits) && !isBlocked(editProposal) && (
-									!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-							)) {
-								lastOrientationEdits.add(orientLinkEdit);
-								return (editProposal);
-							}
-						}
-					} else { // X -- Z Non-oriented link
-						oriented = false;
-						orientLinkEdit = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeZ.getVariable(), true);
-						editProposal = new LearningEditProposal(orientLinkEdit,
-								new StringEditMotivation("Do not create cycles"));
-						if (probNet.existsPath(nodeX, nodeZ, true) && !alreadyConsidered(orientLinkEdit,
-								lastOrientationEdits) && !isBlocked(editProposal) && (
-								!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-						)) {
-							/* Never used
-							change = true;
-							oriented = true;
-							 */
-							lastOrientationEdits.add(orientLinkEdit);
-							return (editProposal);
-						}
-						orientLinkEdit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeX.getVariable(), true);
-						editProposal = new LearningEditProposal(orientLinkEdit,
-								new StringEditMotivation("Do not create cycles"));
-						if ((probNet.existsPath(nodeZ, nodeX, true)) && (!oriented) && !alreadyConsidered(
-								orientLinkEdit, lastOrientationEdits) && !isBlocked(editProposal) && (
-								!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-						)) {
-							/* Never used
-							change = true;
-							oriented = true;
-							 */
-							lastOrientationEdits.add(orientLinkEdit);
-							return (editProposal);
-						}
-						if (!oriented) {// TODO check. !oriented is always true.
-							siblingsNodeZ = nodeZ.getSiblings();
-							siblingsNodeZ.remove(nodeX);
-							for (Node nodeY : siblingsNodeZ) {
-								if (!nodeY.getNeighbors().contains(nodeX)) {
-									for (Node nodeW : siblingsNodeZ) {
-										if (!nodeY.equals(nodeW)) {
-											skip = !nodeX.isParent(nodeW) || probNet.getLink(nodeZ, nodeY, true) != null;
-											if (!skip) {
-												orientLinkEdit = new OrientLinkEdit(probNet, nodeZ.getVariable(),
-														nodeW.getVariable(), true);
-												editProposal = new LearningEditProposal(orientLinkEdit,
-														new StringEditMotivation("Do not create cycles"));
-												if (nodeY.getChildren().contains(nodeW) && !alreadyConsidered(
-														orientLinkEdit, lastOrientationEdits) && !isBlocked(
-														editProposal) && (
-														!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-												)) {
-													/* Never used
-													change = true;
-													skip = true;
-													 */
-													lastOrientationEdits.add(orientLinkEdit);
-													return (editProposal);
-												}
-											}
-											if (!skip) {
-												orientLinkEdit = new OrientLinkEdit(probNet, nodeZ.getVariable(),
-														nodeY.getVariable(), true);
-												editProposal = new LearningEditProposal(orientLinkEdit,
-														new StringEditMotivation("Do not create cycles"));
-												if (nodeW.getChildren().contains(nodeY) && !alreadyConsidered(
-														orientLinkEdit, lastOrientationEdits) && !isBlocked(
-														editProposal) && (
-														!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-												)) {
-													/*
-													change = true;
-													skip = true;
-													 */
-													lastOrientationEdits.add(orientLinkEdit);
-													return (editProposal);
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		// First pass: Try to orient links based on existing directed links (X → Z)
+		editProposal = tryOrientFromDirectedLinks(onlyAllowedEdits);
+		if (editProposal != null) return editProposal;
 
-			for (Link<Node> link : probNet.getLinks()) {
-				nodeX = link.getNode1();
-				nodeZ = link.getNode2();
-				if (!link.isDirected()) {   // X--Z
-					orientLinkEdit = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeZ.getVariable(), true);
-					editProposal = new LearningEditProposal(orientLinkEdit,
-							new StringEditMotivation("Do not create cycles"));
-					if (!probNet.existsPath(nodeZ, nodeX, true) && !alreadyConsidered(orientLinkEdit,
-							lastOrientationEdits) && !isBlocked(editProposal) && (
-							!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit)
-					)) {
-						// Never used
-						// change2 = true;
-						lastOrientationEdits.add(orientLinkEdit);
-						return (editProposal);
-					} else {
-						orientLinkEdit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeX.getVariable(), true);
-						editProposal = new LearningEditProposal(orientLinkEdit,
-								new StringEditMotivation("Do not create cycles"));
-						if (!isBlocked(editProposal) && (!onlyAllowedEdits || isOrientationAllowed(orientLinkEdit))
-								&& (!alreadyConsidered(orientLinkEdit, lastOrientationEdits))) {
-							// Never used
-							// change2 = true;
-							lastOrientationEdits.add(orientLinkEdit);
-							return (editProposal);
+		// Second pass: Try to orient links based on existing paths (X—Z with path X→Z or Z→X)
+		editProposal = tryOrientFromNonOrientedLinks(onlyAllowedEdits);
+		if (editProposal != null) return editProposal;
+
+		// Third pass: Try to orient non-directed links where no path exists in either direction
+		editProposal = tryOrientUnorientedWithoutPath(onlyAllowedEdits);
+		if (editProposal != null) return editProposal;
+
+		// No valid orientation found; mark phase as finished if no edits were proposed
+		if (lastOrientationEdits.isEmpty()) {
+			phase = Phase.ORIENTATION_FINISHED;
+		}
+		return null;
+	}
+
+	/**
+	 * Attempts to orient links based on existing directed links (X → Z).
+	 * If a structure X → Z — Y is found and X is not adjacent to Y,
+	 * it proposes to orient Z — Y to avoid introducing cycles.
+	 *
+	 * @param onlyAllowedEdits whether to restrict to allowed orientations
+	 * @return a LearningEditProposal if an orientation is possible; null otherwise
+	 */
+	private LearningEditProposal tryOrientFromDirectedLinks(boolean onlyAllowedEdits) {
+		for (Link<Node> link : probNet.getLinks()) {
+			if (link.isDirected()) {
+				Node nodeX = link.getNode1();
+				Node nodeZ = link.getNode2();
+				for (Node nodeY : nodeZ.getSiblings()) {
+					OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(), true);
+					LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+					// Conditions:
+					// 1. X is not adjacent to Y
+					// 2. This orientation hasn't already been tried
+					// 3. The orientation is not blocked
+					// 4. If filtering is active, the orientation must be allowed
+					if (!nodeY.getNeighbors().contains(nodeX)
+							&& !alreadyConsidered(edit, lastOrientationEdits)
+							&& !isBlocked(proposal)
+							&& (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+						lastOrientationEdits.add(edit);
+						return proposal;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Attempts to orient non-directed links (X—Z) based on the existence of directed paths
+	 * from X to Z or from Z to X, or based on collider patterns between neighbors of Z.
+	 *
+	 * @param onlyAllowedEdits whether to restrict to allowed orientations
+	 * @return a LearningEditProposal if an orientation is possible; null otherwise
+	 * @throws NodeNotFoundException if node relations are inconsistent
+	 */
+	private LearningEditProposal tryOrientFromNonOrientedLinks(boolean onlyAllowedEdits) throws NodeNotFoundException {
+		for (Link<Node> link : probNet.getLinks()) {
+			if (!link.isDirected()) {
+				Node nodeX = link.getNode1();
+				Node nodeZ = link.getNode2();
+
+				LearningEditProposal proposal = tryOrientIfPathExists(nodeX, nodeZ, onlyAllowedEdits);
+				if (proposal != null) return proposal;
+
+				proposal = tryOrientIfPathExists(nodeZ, nodeX, onlyAllowedEdits);
+				if (proposal != null) return proposal;
+
+				proposal = tryColliderPatterns(nodeX, nodeZ, onlyAllowedEdits);
+				if (proposal != null) return proposal;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Tries to orient a non-directed link if a directed path exists between the nodes.
+	 *
+	 * @param from starting node
+	 * @param to target node
+	 * @param onlyAllowedEdits whether to restrict to allowed orientations
+	 * @return a LearningEditProposal if the path justifies the orientation; null otherwise
+	 * @throws NodeNotFoundException if a node is not found in the network
+	 */
+	private LearningEditProposal tryOrientIfPathExists(Node from, Node to, boolean onlyAllowedEdits) throws NodeNotFoundException {
+		OrientLinkEdit edit = new OrientLinkEdit(probNet, from.getVariable(), to.getVariable(), true);
+		LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+		// Conditions:
+		// 1. There is a directed path from 'from' to 'to' in the DAG
+		// 2. This orientation hasn't already been proposed
+		// 3. It is not blocked by any constraint
+		// 4. If restrictions apply, it must be allowed
+		if (probNet.existsPath(from, to, true)
+				&& !alreadyConsidered(edit, lastOrientationEdits)
+				&& !isBlocked(proposal)
+				&& (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+			lastOrientationEdits.add(edit);
+			return proposal;
+		}
+		return null;
+	}
+
+	/**
+	 * Attempts to orient links based on collider-like patterns (Y—Z—W),
+	 * looking for triplets that form converging arrows (e.g., Y → Z ← W)
+	 * to prevent unshielded colliders and cycles.
+	 *
+	 * @param nodeX the node not adjacent to Y or W
+	 * @param nodeZ the common neighbor
+	 * @param onlyAllowedEdits whether to restrict to allowed orientations
+	 * @return a LearningEditProposal if a collider orientation is proposed; null otherwise
+	 */
+	private LearningEditProposal tryColliderPatterns(Node nodeX, Node nodeZ, boolean onlyAllowedEdits) {
+		List<Node> siblingsZ = new ArrayList<>(nodeZ.getSiblings());
+		siblingsZ.remove(nodeX);
+		for (Node nodeY : siblingsZ) {
+			if (!nodeY.getNeighbors().contains(nodeX)) {
+				for (Node nodeW : siblingsZ) {
+					if (!nodeY.equals(nodeW)) {
+						// Skip this combination if:
+						// - X is not a parent of W
+						// - or Z already has an oriented link to Y
+						boolean skip = !nodeX.isParent(nodeW) || probNet.getLink(nodeZ, nodeY, true) != null;
+
+						if (!skip && nodeY.getChildren().contains(nodeW)) {
+							OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeW.getVariable(), true);
+							LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+							// Check orientation feasibility
+							if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
+									&& (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+								lastOrientationEdits.add(edit);
+								return proposal;
+							}
+						}
+
+						if (!skip && nodeW.getChildren().contains(nodeY)) {
+							OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(), true);
+							LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+							// Check orientation feasibility
+							if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
+									&& (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+								lastOrientationEdits.add(edit);
+								return proposal;
+							}
 						}
 					}
 				}
 			}
-			orientLinkEdit = null;
 		}
-		if ((orientLinkEdit == null) && (lastOrientationEdits.isEmpty())) {
-			phase = Phase.ORIENTATION_FINISHED;
+		return null;
+	}
+
+	/**
+	 * Attempts to orient non-directed links (X—Z) when no directed path exists in either direction,
+	 * as a last resort. Prioritizes orientations that preserve acyclicity and consistency.
+	 *
+	 * @param onlyAllowedEdits whether to restrict to allowed orientations
+	 * @return a LearningEditProposal if a safe orientation is found; null otherwise
+	 * @throws NodeNotFoundException if node paths cannot be resolved
+	 */
+	private LearningEditProposal tryOrientUnorientedWithoutPath(boolean onlyAllowedEdits) throws NodeNotFoundException {
+		for (Link<Node> link : probNet.getLinks()) {
+			if (!link.isDirected()) {
+				Node nodeX = link.getNode1();
+				Node nodeZ = link.getNode2();
+
+				OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeZ.getVariable(), true);
+				LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+				// Conditions:
+				// 1. No path from Z to X to avoid cycle
+				// 2. Not already considered
+				// 3. Not blocked
+				// 4. Allowed if filtering enabled
+				if (!probNet.existsPath(nodeZ, nodeX, true) && !alreadyConsidered(edit, lastOrientationEdits)
+						&& !isBlocked(proposal) && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+					lastOrientationEdits.add(edit);
+					return proposal;
+				}
+
+				// Try Z → X
+				edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeX.getVariable(), true);
+				proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
+
+				// Same conditions, different direction
+				if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
+						&& (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+					lastOrientationEdits.add(edit);
+					return proposal;
+				}
+			}
 		}
 		return null;
 	}
