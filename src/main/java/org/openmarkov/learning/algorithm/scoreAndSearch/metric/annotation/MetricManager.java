@@ -20,6 +20,7 @@ import java.util.Set;
 public class MetricManager {
 	private PluginLoaderIF pluginsLoader;
 	private HashMap<String, Class<? extends Metric>> metrics;
+	private HashMap<String, Class<? extends Metric>> classConditionedMetrics;
 
 	/**
 	 * Constructor for MetricManager.
@@ -29,11 +30,16 @@ public class MetricManager {
 		this.pluginsLoader = new PluginLoader();
 
 		metrics = new HashMap<String, Class<? extends Metric>>();
+		classConditionedMetrics = new HashMap<String, Class<? extends Metric>>();
 
 		for (Class<?> plugin : findAllMetrics()) {
 			MetricType lAnnotation = plugin.getAnnotation(MetricType.class);
 			if (Metric.class.isAssignableFrom(plugin)) {
-				metrics.put(lAnnotation.name(), (Class<? extends Metric>) plugin);
+				if(!plugin.getAnnotation(MetricType.class).classConditionedMetric()){
+					metrics.put(lAnnotation.name(), (Class<? extends Metric>) plugin);
+				}else{
+					classConditionedMetrics.put(lAnnotation.name(), (Class<? extends Metric>) plugin);
+				}
 			} else {
 				throw new AnnotationFormatError("Constraint annotation must be in a class that extends Metric");
 			}
@@ -48,7 +54,7 @@ public class MetricManager {
 	 * @return a learning algorithm.
 	 */
 	public final Class<? extends Metric> getMetricByName(String name) {
-		return metrics.get(name);
+		return metrics.get(name)!=null? metrics.get(name):classConditionedMetrics.get(name);
 	}
 
 	/**
@@ -73,6 +79,14 @@ public class MetricManager {
 		}
 		return null;
 	}
-
+	
+	/**
+	 * Returns the names of those metrics whose score is conditioned to a class variable
+	 * @return A set of metric names
+	 */
+	public final Set<String> getClassConditionedMetrics(){
+		return classConditionedMetrics.keySet();
+	}
+	
 }
 

@@ -304,7 +304,7 @@ public abstract class Metric implements PNUndoableEditListener {
 	/**
 	 * Fills cache with data
 	 */
-	private void initCache() {
+	protected void initCache() {
 		this.cache = new Cache();
 		cachedNodeScores = new HashMap<String, Double>();
 		cache.flush(probNet);
