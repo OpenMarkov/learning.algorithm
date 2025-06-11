@@ -14,6 +14,7 @@ import org.openmarkov.core.model.network.potential.PotentialRole;
 import org.openmarkov.core.model.network.potential.TablePotential;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -35,41 +36,52 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 	 * @return the score obtained in the independence test.
 	 */
 	public double test(CaseDatabase caseDatabase, Node nodeX, Node nodeY, List<Node> adjacencySubset) {
+		// Validate inputs
 		if (caseDatabase == null || nodeX == null || nodeY == null || adjacencySubset == null) {
 			throw new IllegalArgumentException("Input arguments in CrossEntropyIndependenceTester cannot be null.");
 		}
 
 		long degreesOfFreedom, numStatesAdjacency = 1, potentialSize = 1;
 		double crossEntropy, chiS;
+		
+	    // nodesYZ = {Y, Z1, Z2, ..., Zn}
+	    // nodesZ  = {Z1, Z2, ..., Zn}
 		List<Node> nodesYZ = new ArrayList<Node>();
 		List<Node> nodesZ = new ArrayList<Node>();
 		nodesYZ.add(nodeY);
 		for (Node adjacent : adjacencySubset) {
 			nodesYZ.add(adjacent);
 			nodesZ.add(adjacent);
+	        // Compute the product of the number of states of all nodes in Z
 			numStatesAdjacency *= adjacent.getVariable().getNumStates();
 		}
+		
+	    // Compute the joint state space size
 		potentialSize = numStatesAdjacency * nodeX.getVariable().getNumStates() * nodeY.getVariable().getNumStates();
+	    // Compute the cross-entropy between X and Y given Z
 		crossEntropy = crossEntropy(caseDatabase, nodeX, nodeY, nodesYZ, nodesZ);
+	    // Compute the chi-square statistic
 		chiS = 2.0 * caseDatabase.getNumCases() * crossEntropy;
+	    // Prevent numerical instabilities near zero
 		chiS = (Math.abs(chiS) < 1e-10) ? 0.0 : chiS;
 
+	    // Compute degrees of freedom: (#states(Z)) * (|X|-1) * (|Y|-1)
 		degreesOfFreedom = numStatesAdjacency * (nodeX.getVariable().getNumStates() - 1) * (
 				nodeY.getVariable().getNumStates() - 1
 		);
 
+	    // Adjust degrees of freedom if state space is too small
 		if (potentialSize < degreesOfFreedom)
 			degreesOfFreedom = potentialSize;
 		if (degreesOfFreedom <= 0)
 			degreesOfFreedom = 1;
 
-		return StatisticalUtilities.chiSquare(chiS, degreesOfFreedom);
+		return StatisticalUtilities.chiSquare(chiS, degreesOfFreedom); // Return the p-value
 	}
 
 	/**
 	 * Method that calculates the cross entropy between two nodes given a
-	 * conditional set. We use the formula: CE(X,Y|Z) = H(X|Z) - H(X|Y,Z) (where
-	 * CE means 'cross entropy' and H means 'entropy'.
+	 * conditional set. We use the formula: CE(X,Y|Z) = H(X|Z) - H(X|Y,Z) (where H means 'entropy').
 	 *
 	 * @param caseDatabase The database of cases
 	 * @param nodeX The first variable
@@ -78,17 +90,29 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 	 * @param nodesZ  The conditional set Z
 	 * @return the cross entropy between the two nodes X and Y given the conditional set Z
 	 */
-	private double crossEntropy(CaseDatabase caseDatabase, Node nodeX, Node nodeY, List<Node> nodesYZ,
-			List<Node> nodesZ) {
+	private double crossEntropy(CaseDatabase caseDatabase, Node nodeX, Node nodeY, 
+			List<Node> nodesYZ,	List<Node> nodesZ) {
 		return (
 				conditionedEntropy(caseDatabase, nodeX, nodesZ) - conditionedEntropy(caseDatabase, nodeX, nodesYZ)
 		);
 	}
 
 	/**
-	 * Method that calculates the conditioned entropy of a node given a
-	 * conditional set.
-	 *
+	 * Computes the conditional entropy of a variable X given a set of conditioning variables Z.
+	 * <p>
+	 * The conditional entropy H(X | Z) is defined as:
+	 * </p>
+	 * <pre>
+	 *     H(X | Z) = -∑<sub>z</sub> ∑<sub>x</sub> p(x, z) · log(p(x | z))
+	 *              = -∑<sub>z</sub> ∑<sub>x</sub> p(x, z) · log(p(x, z) / p(z))
+	 * </pre>
+	 * <p>
+	 * where:
+	 * <ul>
+	 *   <li>p(x, z) is the joint probability of X = x and Z = z</li>
+	 *   <li>p(x | z) is the conditional probability of X = x given Z = z</li>
+	 * </ul>
+	 * </p>
 	 * @param caseDatabase The database of cases
 	 * @param nodeX        The target variable
 	 * @param adjacencySubset The conditional set
@@ -98,27 +122,33 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 		int numCases = caseDatabase.getNumCases();
 		int numStates = nodeX.getVariable().getNumStates();
 
-		// Calculate frequencies in the database
+	    // Construct the list of variables: [X, Z1, Z2, ..., Zn]
 		List<Node> nodeAndAdjacency = new ArrayList<Node>();
 		nodeAndAdjacency.add(nodeX);
 		nodeAndAdjacency.addAll(adjacencySubset);
+		
+	    // Compute the absolute joint frequency table for [X, Z]
 		TablePotential absoluteFreqPotential = absoluteFrequencies(caseDatabase, nodeAndAdjacency);
 		double[] freq = absoluteFreqPotential.values;
 
-		// Normalize
+	    // Normalize frequencies: convert counts to probabilities
 		for (int i = 0; i < freq.length; i++) {
 			freq[i] /= numCases;
 		}
 
 		// Calculate entropy
 		double nodeEntropy = 0;
+	    // Iterate through each configuration of the conditioning set Z
 		for (int j = 0; j < freq.length; j += numStates) {
 			double n_ij = 0;
+	        // Sum the probabilities for each state of X given fixed Z = z_j
 			for (int k = 0; k < numStates; k++)
 				n_ij += freq[j + k];
+	        // Compute the contribution of each state x_k to H(X | Z = z_j)
 			for (int k = 0; k < numStates; k++) {
 				double n_ijk = freq[j + k];
 				if (n_ijk > 0) {
+	                // Contribution: p(x_k, z_j) * log(p(x_k | z_j))
 					nodeEntropy += n_ijk * Math.log(n_ijk / n_ij);
 				}
 			}
@@ -137,9 +167,11 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 	 * parents.
 	 */
 	private TablePotential absoluteFrequencies(CaseDatabase caseDatabase, List<Node> nodeList) {
-		int index = 0;
+
+		int numNodes = nodeList.size();
 		List<Variable> variables = new ArrayList<>();
-		int[] indexes = new int[nodeList.size()];
+		int[] indexes = new int[numNodes];
+		int index = 0;
 		for (Node node : nodeList) {
 			variables.add(node.getVariable());
 			indexes[index] = caseDatabase.getVariables().indexOf(node.getVariable());
@@ -149,11 +181,8 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 		TablePotential absoluteFreqPotential = new TablePotential(new ArrayList<Variable>(variables),
 				PotentialRole.CONDITIONAL_PROBABILITY);
 		double[] absoluteFreqs = absoluteFreqPotential.getValues();
-		int[] offsets = absoluteFreqPotential.getOffsets();
-		// Initialise the table
-		for (int i = 0; i < absoluteFreqs.length; i++) {
-			absoluteFreqs[i] = 0;
-		}
+		int[] offsets = absoluteFreqPotential.getOffsets();	
+		Arrays.fill(absoluteFreqs, 0.0); // Initialice the table
 		// Compute the absolute frequencies
 		int numVariables = variables.size();
 		int[][] cases = caseDatabase.getCases();
