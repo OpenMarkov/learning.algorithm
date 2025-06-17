@@ -1,0 +1,14 @@
+package org.openmarkov.learning.algorithm.nbderived.kdb.util;
+
+import org.openmarkov.core.action.PNEdit;
+import org.openmarkov.learning.core.util.LearningEditProposal;
+import org.openmarkov.learning.core.util.ScoreEditMotivation;
+
+public class KDBEditProposal extends LearningEditProposal{
+
+    public KDBEditProposal(PNEdit edit, double score) {
+            super(edit, new ScoreEditMotivation(score));
+        }
+
+
+}

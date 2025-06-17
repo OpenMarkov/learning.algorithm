@@ -1,9 +1,11 @@
-package org.openmarkov.learning.algorithm.naivebayes.gui;
+package org.openmarkov.learning.algorithm.nbderived.kdb.gui;
 
 import org.apache.poi.util.StringUtil;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.learning.algorithm.naivebayes.NaiveBayesAlgorithm;
+import org.openmarkov.learning.algorithm.nbderived.kdb.KDBAlgorithm;
+import org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils;
+import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.metric.annotation.MetricManager;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.gui.AlgorithmConfiguration;
@@ -12,60 +14,56 @@ import org.openmarkov.plugin.service.PluginException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("serial")
-@AlgorithmConfiguration(algorithm = NaiveBayesAlgorithm.class)
-public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
+@AlgorithmConfiguration(algorithm = KDBAlgorithm.class)
+public class KDBParametersDialog extends AlgorithmParametersDialog {
 
-    private static String LINE_SEPARATOR = System.getProperty("line.separator");
-    
     private String unconditionedMetric = "MutualInformation";
+    private String conditionedMetric = "ConditionalMutualInformation";
+    private int kValue = 0;
     private static String alphaParameter = "0.5";
     private MetricManager metricManager;
 
     private JButton AcceptButton;
+    private JLabel kValueLabel;
     private JTextField alphaText;
-    private JLabel alphaLabel;
+    private JTextField kValueField;
+    private JLabel jLabel7;
     private JPanel jPanel1;
+    private JComboBox<String> kValueComboBox;
 
-    public NaiveBayesParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    /**
+     * Creates new form PCOptionsGUI
+     */
+    public KDBParametersDialog(JFrame parent, boolean modal) throws PluginException {
         super(parent, modal);
         setLocationRelativeTo(parent);
+        metricManager = new MetricManager();
         initComponents();
     }
-
-    @Override
-    public String getDescription() {
-        return StringUtil.join(LINE_SEPARATOR,
-                Arrays.asList(
-                        stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter
-                ).toArray());
-    }
-
-
-
-    @Override
-    public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new NaiveBayesAlgorithm(probNet, database, 0.0);
-    }
-
 
 
     private void initComponents() {
         jPanel1 = new JPanel();
         alphaText = new JTextField();
-        alphaLabel = new JLabel();
+        jLabel7 = new JLabel();
         AcceptButton = new JButton();
+        kValueLabel = new JLabel();
+        kValueField = new JTextField();
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(stringDatabase.getString("Learning.NaiveBayes.Title"));
-        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.NaiveBayes.Title")));
+        setTitle(stringDatabase.getString("Learning.KDB.Title"));
+        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.KDB.Title")));
         alphaText.setText(alphaParameter);
-        alphaLabel.setText(stringDatabase.getString("Learning.Alpha") + ":");
-        alphaLabel.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
-
+        jLabel7.setText(stringDatabase.getString("Learning.Alpha") + ":");
+        jLabel7.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
+        kValueLabel.setText(stringDatabase.getString("Learning.KDB.kValue") + ":");
+        kValueLabel.setToolTipText(stringDatabase.getString("Learning.KDB.kValue.Tooltip"));
+        kValueField.setText(String.valueOf(kValue));
 
         AcceptButton.setText(stringDatabase.getString("Learning.Ok"));
         AcceptButton.addActionListener(new java.awt.event.ActionListener() {
@@ -80,21 +78,28 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
                 .addGroup(jPanel1Layout.createSequentialGroup().addGroup(
                         jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                 .addGroup(
-                                        jPanel1Layout.createSequentialGroup().addGap(92, 92, 92).addComponent(AcceptButton))
+                                jPanel1Layout.createSequentialGroup().addGap(92, 92, 92).addComponent(AcceptButton))
                                 .addGroup(jPanel1Layout.createSequentialGroup().addContainerGap().addGroup(
                                         jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(alphaLabel))
+                                                .addComponent(kValueLabel).addComponent(jLabel7))
                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(
                                                 jPanel1Layout
                                                         .createParallelGroup(GroupLayout.Alignment.TRAILING)
+                                                        .addComponent(kValueField,
+                                                                GroupLayout.PREFERRED_SIZE, 40,
+                                                                GroupLayout.PREFERRED_SIZE)
                                                         .addComponent(alphaText, GroupLayout.PREFERRED_SIZE,
                                                                 40, GroupLayout.PREFERRED_SIZE))))
                         .addContainerGap(12, Short.MAX_VALUE)));
         jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup().addGap(18, 18, 18)
+                                       .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(kValueLabel)
+                                .addComponent(kValueField, GroupLayout.PREFERRED_SIZE,
+                                        GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(
                                 jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(alphaLabel)
+                                        .addComponent(jLabel7)
                                         .addComponent(alphaText, GroupLayout.PREFERRED_SIZE,
                                                 GroupLayout.DEFAULT_SIZE,
                                                 GroupLayout.PREFERRED_SIZE)).addGap(11, 11, 11)
@@ -115,6 +120,9 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
     }
 
 
+
+
+
     private void acceptButtonActionPerformed(ActionEvent evt) {
         List<String> errorMessages= new ArrayList<>();
 
@@ -122,18 +130,66 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
             double alpha = Double.parseDouble(alphaText.getText());
 
             if ((alpha < 0) || (alpha > 1)) {
-                errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
+                errorMessages.add(stringDatabase.getString("Learning.KDB.IncorrectParameter"));
             }
         } catch (NumberFormatException e) {
-            errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
-        }
-        if(!errorMessages.isEmpty()){
-            JOptionPane.showMessageDialog(null, StringUtil.join(LINE_SEPARATOR, errorMessages.toArray()),
-                    stringDatabase.getString("ErrorWindow.Title.Label"), JOptionPane.ERROR_MESSAGE);
-            return;
+            errorMessages.add(stringDatabase.getString("Learning.KDB.IncorrectParameter"));
         }
 
+        try {
+
+            int k = Integer.valueOf(kValueField.getText());
+            if(k < 0){
+                errorMessages.add(stringDatabase.getString("Learning.KDB.KIncorrectParents"));
+            }
+        } catch (NumberFormatException e) {
+            errorMessages.add(stringDatabase.getString("Learning.KDB.KIncorrectParents"));
+
+        }
+
+        if(!errorMessages.isEmpty()){
+            JOptionPane.showMessageDialog(null, StringUtil.join(CommonUtils.LINE_SEPARATOR, errorMessages.toArray()),
+                        stringDatabase.getString("ErrorWindow.Title.Label"), JOptionPane.ERROR_MESSAGE);
+                return;
+        }
+
+        kValue = Integer.valueOf(kValueField.getText());
         alphaParameter = alphaText.getText();
         this.setVisible(false);
     }
+
+
+
+    @Override
+    public String getDescription() {
+        return StringUtil.join(CommonUtils.LINE_SEPARATOR,
+                Arrays.asList(stringDatabase.getString("Learning.KDB.Metrics") + ": "+
+                                CommonUtils.getStringFromCamelCaseExpression(unconditionedMetric)+", "+
+                                CommonUtils.getStringFromCamelCaseExpression(conditionedMetric),
+                              stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter,
+                              stringDatabase.getString("Learning.KDB.kValue")+ ": "+kValue
+                ).toArray());
+    }
+
+
+
+    @Override
+    public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
+        return new KDBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),0.0, kValue);
+    }
+
+    private Metric getMetricByName(String metricName){
+        Metric metric = null;
+        try{
+            metric = (Metric) Arrays.stream(metricManager.getMetricByName(metricName).getConstructors()).iterator().next().newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return metric;
+    }
+
+    public String getMetric() {
+        return unconditionedMetric;
+    }
+
 }

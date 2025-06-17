@@ -1,9 +1,10 @@
-package org.openmarkov.learning.algorithm.naivebayes.gui;
+package org.openmarkov.learning.algorithm.nbderived.fanb.gui;
 
 import org.apache.poi.util.StringUtil;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.learning.algorithm.naivebayes.NaiveBayesAlgorithm;
+import org.openmarkov.learning.algorithm.nbderived.fanb.ForestAugmentedNBAlgorithm;
+import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.metric.annotation.MetricManager;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.gui.AlgorithmConfiguration;
@@ -12,17 +13,20 @@ import org.openmarkov.plugin.service.PluginException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings("serial")
-@AlgorithmConfiguration(algorithm = NaiveBayesAlgorithm.class)
-public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
+import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.LINE_SEPARATOR;
+import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.getStringFromCamelCaseExpression;
 
-    private static String LINE_SEPARATOR = System.getProperty("line.separator");
-    
+@SuppressWarnings("serial")
+@AlgorithmConfiguration(algorithm = ForestAugmentedNBAlgorithm.class)
+public class ForestAugmentedNBParametersDialog extends AlgorithmParametersDialog {
+
     private String unconditionedMetric = "MutualInformation";
+    private String conditionedMetric = "ConditionalMutualInformation";
     private static String alphaParameter = "0.5";
     private MetricManager metricManager;
 
@@ -31,26 +35,45 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
     private JLabel alphaLabel;
     private JPanel jPanel1;
 
-    public NaiveBayesParametersDialog(JFrame parent, boolean modal) throws PluginException {
+
+
+    public ForestAugmentedNBParametersDialog(JFrame parent, boolean modal) throws PluginException {
         super(parent, modal);
         setLocationRelativeTo(parent);
+        metricManager = new MetricManager();
         initComponents();
+    }
+
+
+    @Override
+    public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
+        return new ForestAugmentedNBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),0.0);
+    }
+
+    private Metric getMetricByName(String metricName){
+        Metric metric = null;
+        try{
+            metric = (Metric) Arrays.stream(metricManager.getMetricByName(metricName).getConstructors()).iterator().next().newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return metric;
     }
 
     @Override
     public String getDescription() {
         return StringUtil.join(LINE_SEPARATOR,
-                Arrays.asList(
+                Arrays.asList(stringDatabase.getString("Learning.FANB.Metrics") + ": "+
+                                getStringFromCamelCaseExpression(unconditionedMetric)+", "+
+                                getStringFromCamelCaseExpression(conditionedMetric),
                         stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter
                 ).toArray());
     }
 
-
-
-    @Override
-    public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new NaiveBayesAlgorithm(probNet, database, 0.0);
+    public String getMetric() {
+        return unconditionedMetric;
     }
+
 
 
 
@@ -60,8 +83,8 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
         alphaLabel = new JLabel();
         AcceptButton = new JButton();
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(stringDatabase.getString("Learning.NaiveBayes.Title"));
-        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.NaiveBayes.Title")));
+        setTitle(stringDatabase.getString("Learning.FANB.Title"));
+        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.FANB.Title")));
         alphaText.setText(alphaParameter);
         alphaLabel.setText(stringDatabase.getString("Learning.Alpha") + ":");
         alphaLabel.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
@@ -115,6 +138,7 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
     }
 
 
+
     private void acceptButtonActionPerformed(ActionEvent evt) {
         List<String> errorMessages= new ArrayList<>();
 
@@ -122,10 +146,10 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
             double alpha = Double.parseDouble(alphaText.getText());
 
             if ((alpha < 0) || (alpha > 1)) {
-                errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
+                errorMessages.add(stringDatabase.getString("Learning.FANB.IncorrectParameter"));
             }
         } catch (NumberFormatException e) {
-            errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
+            errorMessages.add(stringDatabase.getString("Learning.FANB.IncorrectParameter"));
         }
         if(!errorMessages.isEmpty()){
             JOptionPane.showMessageDialog(null, StringUtil.join(LINE_SEPARATOR, errorMessages.toArray()),
@@ -136,4 +160,5 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
         alphaParameter = alphaText.getText();
         this.setVisible(false);
     }
+
 }

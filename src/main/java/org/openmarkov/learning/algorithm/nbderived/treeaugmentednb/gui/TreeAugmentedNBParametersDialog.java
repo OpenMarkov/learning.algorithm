@@ -1,70 +1,89 @@
-package org.openmarkov.learning.algorithm.naivebayes.gui;
+package org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.gui;
 
 import org.apache.poi.util.StringUtil;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.learning.algorithm.naivebayes.NaiveBayesAlgorithm;
+import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.metric.annotation.MetricManager;
+import org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.TreeAugmentedNBAlgorithm;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.gui.AlgorithmConfiguration;
 import org.openmarkov.learning.gui.AlgorithmParametersDialog;
 import org.openmarkov.plugin.service.PluginException;
+import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.LINE_SEPARATOR;
+import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.getStringFromCamelCaseExpression;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings("serial")
-@AlgorithmConfiguration(algorithm = NaiveBayesAlgorithm.class)
-public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
 
-    private static String LINE_SEPARATOR = System.getProperty("line.separator");
-    
-    private String unconditionedMetric = "MutualInformation";
+@SuppressWarnings("serial")
+@AlgorithmConfiguration(algorithm = TreeAugmentedNBAlgorithm.class)
+public class TreeAugmentedNBParametersDialog extends AlgorithmParametersDialog {
+
+    private String metric = "ConditionalMutualInformation";
     private static String alphaParameter = "0.5";
+    private static String significanceLevel = "0.05";
     private MetricManager metricManager;
 
     private JButton AcceptButton;
+    private JLabel testerLabel;
     private JTextField alphaText;
-    private JLabel alphaLabel;
+    private JTextField significanceLevelText;
+    private JLabel jLabel7;
+    private JLabel jLabel8;
     private JPanel jPanel1;
 
-    public NaiveBayesParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public TreeAugmentedNBParametersDialog(JFrame parent, boolean modal) throws PluginException {
         super(parent, modal);
         setLocationRelativeTo(parent);
+        metricManager = new MetricManager();
         initComponents();
     }
 
     @Override
     public String getDescription() {
         return StringUtil.join(LINE_SEPARATOR,
-                Arrays.asList(
+                Arrays.asList(stringDatabase.getString("Learning.TreeAugmentedNaiveBayes.Metric") + ": "+
+                                getStringFromCamelCaseExpression(metric),
                         stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter
                 ).toArray());
     }
 
 
-
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new NaiveBayesAlgorithm(probNet, database, 0.0);
+        Metric metricInstance = null;
+        try {
+            metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors()).iterator().next().newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return new TreeAugmentedNBAlgorithm(probNet, database, metricInstance, 0.0);
     }
 
+
+
+    public String getMetric() {
+        return metric;
+    }
 
 
     private void initComponents() {
         jPanel1 = new JPanel();
         alphaText = new JTextField();
-        alphaLabel = new JLabel();
+        jLabel7 = new JLabel();
         AcceptButton = new JButton();
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle(stringDatabase.getString("Learning.NaiveBayes.Title"));
-        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.NaiveBayes.Title")));
+       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle(stringDatabase.getString("Learning.TreeAugmentedNaiveBayes.Title"));
+        jPanel1.setBorder(BorderFactory.createTitledBorder(stringDatabase.getString("Learning.TreeAugmentedNaiveBayes.Title")));
         alphaText.setText(alphaParameter);
-        alphaLabel.setText(stringDatabase.getString("Learning.Alpha") + ":");
-        alphaLabel.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
+        jLabel7.setText(stringDatabase.getString("Learning.Alpha") + ":");
+        jLabel7.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
 
 
         AcceptButton.setText(stringDatabase.getString("Learning.Ok"));
@@ -83,7 +102,7 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
                                         jPanel1Layout.createSequentialGroup().addGap(92, 92, 92).addComponent(AcceptButton))
                                 .addGroup(jPanel1Layout.createSequentialGroup().addContainerGap().addGroup(
                                         jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                .addComponent(alphaLabel))
+                                                .addComponent(jLabel7))
                                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(
                                                 jPanel1Layout
                                                         .createParallelGroup(GroupLayout.Alignment.TRAILING)
@@ -94,7 +113,7 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
                 .addGroup(jPanel1Layout.createSequentialGroup().addGap(18, 18, 18)
                                        .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED).addGroup(
                                 jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(alphaLabel)
+                                        .addComponent(jLabel7)
                                         .addComponent(alphaText, GroupLayout.PREFERRED_SIZE,
                                                 GroupLayout.DEFAULT_SIZE,
                                                 GroupLayout.PREFERRED_SIZE)).addGap(11, 11, 11)
@@ -115,6 +134,8 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
     }
 
 
+
+
     private void acceptButtonActionPerformed(ActionEvent evt) {
         List<String> errorMessages= new ArrayList<>();
 
@@ -122,11 +143,12 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
             double alpha = Double.parseDouble(alphaText.getText());
 
             if ((alpha < 0) || (alpha > 1)) {
-                errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
+                errorMessages.add(stringDatabase.getString("Learning.TreeAugmentedNaiveBayes.IncorrectParameter"));
             }
         } catch (NumberFormatException e) {
-            errorMessages.add(stringDatabase.getString("Learning.NaiveBayes.IncorrectParameter"));
+            errorMessages.add(stringDatabase.getString("Learning.TreeAugmentedNaiveBayes.IncorrectParameter"));
         }
+
         if(!errorMessages.isEmpty()){
             JOptionPane.showMessageDialog(null, StringUtil.join(LINE_SEPARATOR, errorMessages.toArray()),
                     stringDatabase.getString("ErrorWindow.Title.Label"), JOptionPane.ERROR_MESSAGE);
@@ -136,4 +158,5 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
         alphaParameter = alphaText.getText();
         this.setVisible(false);
     }
+
 }
