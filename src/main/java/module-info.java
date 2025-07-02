@@ -1,4 +1,4 @@
-module org.openmarkov.learning.algorithm {
+open module org.openmarkov.learning.algorithm {
     requires java.desktop;
     requires org.apache.logging.log4j;
     requires org.apache.poi.poi;
