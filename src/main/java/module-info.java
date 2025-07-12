@@ -16,5 +16,12 @@ open module org.openmarkov.learning.algorithm {
     exports org.openmarkov.learning.algorithm.pc;
     exports org.openmarkov.learning.algorithm.hillclimbing;
     exports org.openmarkov.learning.algorithm.naivebayes;
-    
+    exports org.openmarkov.learning.algorithm.em.gui;
+    exports org.openmarkov.learning.algorithm.hillclimbing.gui;
+    exports org.openmarkov.learning.algorithm.nbderived.snb.gui;
+    exports org.openmarkov.learning.algorithm.nbderived.spnb.gui;
+    exports org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.gui;
+    exports org.openmarkov.learning.algorithm.pc.gui;
+    exports org.openmarkov.learning.algorithm.pc.independencetester;
+
 }
