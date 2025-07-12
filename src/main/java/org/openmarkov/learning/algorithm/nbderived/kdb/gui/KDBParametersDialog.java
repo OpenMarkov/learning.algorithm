@@ -40,7 +40,7 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
     /**
      * Creates new form PCOptionsGUI
      */
-    public KDBParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public KDBParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         metricManager = new MetricManager();

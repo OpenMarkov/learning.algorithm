@@ -31,7 +31,7 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
     private JLabel alphaLabel;
     private JPanel jPanel1;
 
-    public NaiveBayesParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public NaiveBayesParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         initComponents();

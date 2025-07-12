@@ -19,17 +19,15 @@ import java.util.List;
  * @author joliva
  */
 public interface IndependenceTester {
-
-	/**
-	 * Tests the dependency level of two variables A and B given an adjacency set of variables Z.
-	 *
-	 * @param caseDatabase    <code>caseDatabase</code> case database
-	 * @param node2           <code>Node</code> second variable.
-	 * @param adjacencySubset <code>ArrayList</code> of <code>Node</code>
-	 *                        representing the separation set (i.e. the conditional set).
-	 * @return the score obtained in the independence test.
-	 * @throws NodeNotFoundException
-	 */
-    double test(CaseDatabase caseDatabase, Node node1, Node node2, List<Node> adjacencySubset)
-			throws NodeNotFoundException;
+    
+    /**
+     * Tests the dependency level of two variables A and B given an adjacency set of variables Z.
+     *
+     * @param caseDatabase    <code>caseDatabase</code> case database
+     * @param node2           <code>Node</code> second variable.
+     * @param adjacencySubset <code>ArrayList</code> of <code>Node</code>
+     *                        representing the separation set (i.e. the conditional set).
+     * @return the score obtained in the independence test.
+     */
+    double test(CaseDatabase caseDatabase, Node node1, Node node2, List<Node> adjacencySubset);
 }

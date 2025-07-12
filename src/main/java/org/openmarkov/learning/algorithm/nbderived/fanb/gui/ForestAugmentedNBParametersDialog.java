@@ -37,7 +37,7 @@ public class ForestAugmentedNBParametersDialog extends AlgorithmParametersDialog
 
 
 
-    public ForestAugmentedNBParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public ForestAugmentedNBParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         metricManager = new MetricManager();
