@@ -65,7 +65,7 @@ public class EMAlgorithm extends LearningAlgorithm {
 	/**
 	 * Parametric learning
 	 */
-	@Override public ProbNet parametricLearning() throws NormalizeNullVectorException {
+	@Override public ProbNet parametricLearning() {
 		int[][] cases = caseDatabase.getCases();
 		List<Variable> variables = caseDatabase.getVariables();
 
@@ -256,7 +256,7 @@ public class EMAlgorithm extends LearningAlgorithm {
 			this.expandedNet = expandedNet;
 		}
 
-		@Override public Map<Variable, TablePotential> call() throws Exception {
+		@Override public Map<Variable, TablePotential> call() {
 			Map<Variable, TablePotential> jointProbabilities = new HashMap<>();
 			EvidenceCase caseEvidence = new EvidenceCase();
 			for (int j = 0; j < dataCase.length; ++j) {

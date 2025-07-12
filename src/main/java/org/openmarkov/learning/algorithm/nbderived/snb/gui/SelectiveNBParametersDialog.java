@@ -39,7 +39,7 @@ public class SelectiveNBParametersDialog extends AlgorithmParametersDialog {
     private JPanel jPanel1;
     private JCheckBox forwardCheckbox;
 
-    public SelectiveNBParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public SelectiveNBParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         metricManager = new MetricManager();

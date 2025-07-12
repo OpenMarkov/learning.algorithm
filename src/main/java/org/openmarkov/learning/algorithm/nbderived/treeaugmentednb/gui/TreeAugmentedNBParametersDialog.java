@@ -38,7 +38,7 @@ public class TreeAugmentedNBParametersDialog extends AlgorithmParametersDialog {
     private JLabel jLabel8;
     private JPanel jPanel1;
 
-    public TreeAugmentedNBParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public TreeAugmentedNBParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         metricManager = new MetricManager();

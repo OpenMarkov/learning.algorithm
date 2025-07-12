@@ -36,7 +36,7 @@ public class SuperParentNaiveBayesParametersDialog extends AlgorithmParametersDi
     private JLabel jLabelSP;
     private JPanel jPanel1;
 
-    public SuperParentNaiveBayesParametersDialog(JFrame parent, boolean modal) throws PluginException {
+    public SuperParentNaiveBayesParametersDialog(JFrame parent, boolean modal) {
         super(parent, modal);
         setLocationRelativeTo(parent);
         metricManager = new MetricManager();
