@@ -3,7 +3,6 @@ package org.openmarkov.learning.algorithm.nbderived.spnb;
 import org.openmarkov.core.action.AddLinkEdit;
 import org.openmarkov.core.action.BaseLinkEdit;
 import org.openmarkov.core.action.PNEdit;
-import org.openmarkov.core.exception.NodeNotFoundException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
@@ -187,11 +186,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
                              .filter(n -> !n.getName().equals(bestEdit[0].getVariable2().getName()))
                              .map(Node::getVariable)
                              .forEach(v -> {
-                                 try {
-                                     probNet.addLink(bestEdit[0].getVariable2(), v, true);
-                                 } catch (NodeNotFoundException e) {
-                                 
-                                 }
+                                 probNet.addLink(bestEdit[0].getVariable2(), v, true);
                              });
             bestEdit[0] = null;
         }

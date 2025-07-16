@@ -11,8 +11,6 @@
 package org.openmarkov.learning.algorithm.em;
 
 import org.junit.jupiter.api.*;
-import org.openmarkov.core.exception.NodeNotFoundException;
-import org.openmarkov.core.exception.NormalizeNullVectorException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
@@ -35,9 +33,8 @@ public class EMAlgorithmTests {
 	private EMAlgorithm algorithm;
 
 	/**
-	 * @throws java.lang.Exception
-	 */
-	@BeforeEach public void setUp() throws Exception {
+     */
+	@BeforeEach public void setUp() {
 		ProbNet probNet = new ProbNet();
 
 		Variable C = new Variable("C", "C0", "C1", "C2");
@@ -82,7 +79,7 @@ public class EMAlgorithmTests {
 
 	}
 
-	@Test public void test() throws NormalizeNullVectorException, NodeNotFoundException {
+	@Test public void test() {
 		ProbNet learnedNet = algorithm.parametricLearning();
 		Assertions.assertNotNull(learnedNet);
 		Assertions.assertEquals(4, learnedNet.getNumNodes());

@@ -3,7 +3,6 @@ package org.openmarkov.learning.algorithm.nbderived.kdb;
 import org.openmarkov.core.action.AddLinkEdit;
 import org.openmarkov.core.action.BaseLinkEdit;
 import org.openmarkov.core.action.PNEdit;
-import org.openmarkov.core.exception.NodeNotFoundException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
@@ -176,19 +175,15 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
             
         } else {
             domainFeatures.stream().filter(n -> n != xMaxWithPendingArcs.getVariable().getName()).forEach(df -> {
-                try {
-                    AddLinkEdit addLink = new AddLinkEdit(probNet, probNet.getVariable(df), xMaxWithPendingArcs.getVariable(), true);
-                    double addScore = metric.getScore(addLink);
-                    
-                    if ((addScore >= bestPartialScore[0]) && !isEditAlreadyConsidered(addLink)
-                            && ((!onlyAllowedEdits || isAllowed(addLink))
-                            && (!onlyPositiveEdits || addScore >= 0) && !isBlocked(addLink))
-                    ) {
-                        bestEdit[0] = addLink;
-                        bestPartialScore[0] = addScore;
-                    }
-                } catch (NodeNotFoundException e) {
-                    e.printStackTrace();
+                AddLinkEdit addLink = new AddLinkEdit(probNet, probNet.getVariable(df), xMaxWithPendingArcs.getVariable(), true);
+                double addScore = metric.getScore(addLink);
+                
+                if ((addScore >= bestPartialScore[0]) && !isEditAlreadyConsidered(addLink)
+                        && ((!onlyAllowedEdits || isAllowed(addLink))
+                        && (!onlyPositiveEdits || addScore >= 0) && !isBlocked(addLink))
+                ) {
+                    bestEdit[0] = addLink;
+                    bestPartialScore[0] = addScore;
                 }
                 
             });
@@ -219,13 +214,9 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
      */
     private Node getLastXMaxWithPendingArcs() {
         Node node = null;
-        try {
-            node = !domainFeatures.isEmpty() && (probNet.getNode(domainFeatures.getLast())
-                                                        .getNumParents() - 1) < Math.min(kDependence, domainFeatures.size() - 1) ?
-                    probNet.getNode(domainFeatures.getLast()) : null;
-        } catch (NodeNotFoundException e) {
-            e.printStackTrace();
-        }
+        node = !domainFeatures.isEmpty() && (probNet.getNode(domainFeatures.getLast())
+                                                    .getNumParents() - 1) < Math.min(kDependence, domainFeatures.size() - 1) ?
+                probNet.getNode(domainFeatures.getLast()) : null;
         return node;
     }
     

@@ -8,8 +8,6 @@
 package org.openmarkov.learning.algorithm.em;
 
 import org.openmarkov.core.action.PNEdit;
-import org.openmarkov.core.exception.NodeNotFoundException;
-import org.openmarkov.core.exception.NormalizeNullVectorException;
 import org.openmarkov.core.exception.NotEvaluableNetworkException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.EvidenceCase;
@@ -193,30 +191,26 @@ public class EMAlgorithm extends LearningAlgorithm {
 					potentials.addAll(noisyPotentials);
 
 					Variable conditioningVariable = potential.getVariable(0);
-					try {
-						for (TablePotential noisyPotential : noisyPotentials) {
-							Variable zVariable = noisyPotential.getVariable(0);
-							Variable parentVariable = noisyPotential.getVariable(1);
-							expandedNet.addNode(zVariable, NodeType.CHANCE);
-							expandedNet.removeLink(parentVariable, conditioningVariable, true);
-							expandedNet.addLink(parentVariable, zVariable, true);
-							expandedNet.addLink(zVariable, conditioningVariable, true);
-							expandedNet.getNode(zVariable).setPotential(noisyPotential);
-						}
-
-						TablePotential leakyPotential = iciPotential.getLeakyPotential();
-						if (leakyPotential != null) {
-							Variable leakyVariable = leakyPotential.getVariable(0);
-							expandedNet.addNode(leakyVariable, NodeType.CHANCE);
-							expandedNet.getNode(leakyVariable).setPotential(leakyPotential);
-							expandedNet.addLink(leakyVariable, conditioningVariable, true);
-						}
-						expandedNet.getNode(conditioningVariable).setPotential(iciPotential.getFFunctionPotential());
-					} catch (NodeNotFoundException e) {
-						e.printStackTrace();
-					}
-
-				} else if (potential instanceof TablePotential) {
+                    for (TablePotential noisyPotential : noisyPotentials) {
+                        Variable zVariable = noisyPotential.getVariable(0);
+                        Variable parentVariable = noisyPotential.getVariable(1);
+                        expandedNet.addNode(zVariable, NodeType.CHANCE);
+                        expandedNet.removeLink(parentVariable, conditioningVariable, true);
+                        expandedNet.addLink(parentVariable, zVariable, true);
+                        expandedNet.addLink(zVariable, conditioningVariable, true);
+                        expandedNet.getNode(zVariable).setPotential(noisyPotential);
+                    }
+                    
+                    TablePotential leakyPotential = iciPotential.getLeakyPotential();
+                    if (leakyPotential != null) {
+                        Variable leakyVariable = leakyPotential.getVariable(0);
+                        expandedNet.addNode(leakyVariable, NodeType.CHANCE);
+                        expandedNet.getNode(leakyVariable).setPotential(leakyPotential);
+                        expandedNet.addLink(leakyVariable, conditioningVariable, true);
+                    }
+                    expandedNet.getNode(conditioningVariable).setPotential(iciPotential.getFFunctionPotential());
+                    
+                } else if (potential instanceof TablePotential) {
 					potentials.add((TablePotential) potential);
 				}
 			}

@@ -9,7 +9,7 @@ import org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.TreeAugmented
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.gui.AlgorithmConfiguration;
 import org.openmarkov.learning.gui.AlgorithmParametersDialog;
-import org.openmarkov.plugin.service.PluginException;
+
 import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.LINE_SEPARATOR;
 import static org.openmarkov.learning.algorithm.nbderived.common.util.CommonUtils.getStringFromCamelCaseExpression;
 
