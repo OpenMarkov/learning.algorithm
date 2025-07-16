@@ -9,7 +9,6 @@ import org.openmarkov.learning.metric.annotation.MetricManager;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.gui.AlgorithmConfiguration;
 import org.openmarkov.learning.gui.AlgorithmParametersDialog;
-import org.openmarkov.plugin.service.PluginException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
