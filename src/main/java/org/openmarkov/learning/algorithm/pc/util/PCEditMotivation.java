@@ -45,7 +45,7 @@ public class PCEditMotivation extends ScoreEditMotivation {
 		return description;
 	}
 
-	public int compareTo(LearningEditMotivation otherEdit) {
+	@Override public int compareTo(LearningEditMotivation otherEdit) {
 		int returnValue = 0;
 
 		if (otherEdit == null) {

@@ -81,7 +81,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
      *                          edits with a positive associated score are returned.
      * @return <code>LearningEditProposal</code> with the best edit and its score.
      */
-    public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         resetHistory();
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
     }
@@ -110,11 +110,11 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
      *                          edits with a positive associated score are returned.
      * @return <code>LearningEditProposal</code> with the best edit and its score.
      */
-    public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
     }
     
-    public void init(ModelNetUse modelNetUse) {
+    @Override public void init(ModelNetUse modelNetUse) {
         domainFeatures = new LinkedList<>();
         setRelationsForRootVariable();
         if (metric instanceof MutualInformationMetric) {

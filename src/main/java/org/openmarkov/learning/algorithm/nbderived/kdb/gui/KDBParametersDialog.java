@@ -66,7 +66,7 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
 
         AcceptButton.setText(stringDatabase.getString("Learning.Ok"));
         AcceptButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent evt) {
+            @Override public void actionPerformed(ActionEvent evt) {
                 acceptButtonActionPerformed(evt);
             }
         });

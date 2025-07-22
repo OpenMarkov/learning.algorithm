@@ -82,7 +82,7 @@ import java.util.Set;
 		jLabel7.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
 		AceptButton.setText(stringDatabase.getString("Learning.Ok"));
 		AceptButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+			@Override public void actionPerformed(java.awt.event.ActionEvent evt) {
 				AceptButtonActionPerformed(evt);
 			}
 		});
@@ -148,7 +148,7 @@ import java.util.Set;
 		this.setVisible(false);
 	}// GEN-LAST:event_AceptButtonActionPerformed
 
-	public String getDescription() {
+	@Override public String getDescription() {
 		return stringDatabase.getString("Learning.HillClimbing.Metric") + ": " + metric + "\r\n" + stringDatabase
 				.getString("Learning.Alpha") + ": " + alphaParameter;
 	}

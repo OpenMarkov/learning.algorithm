@@ -35,7 +35,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
 	 *                        representing the separation set (i.e. the conditional set).
 	 * @return the score obtained in the independence test.
 	 */
-	public double test(CaseDatabase caseDatabase, Node nodeX, Node nodeY, List<Node> adjacencySubset) {
+	@Override public double test(CaseDatabase caseDatabase, Node nodeX, Node nodeY, List<Node> adjacencySubset) {
 		// Validate inputs
 		if (caseDatabase == null || nodeX == null || nodeY == null || adjacencySubset == null) {
 			throw new IllegalArgumentException("Input arguments in CrossEntropyIndependenceTester cannot be null.");

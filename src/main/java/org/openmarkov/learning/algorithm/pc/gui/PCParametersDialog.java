@@ -86,7 +86,7 @@ import javax.swing.*;
 		jLabel7.setToolTipText(stringDatabase.getString("Learning.Alpha.Tooltip"));
 		AceptButton.setText(stringDatabase.getString("Learning.Ok"));
 		AceptButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+			@Override public void actionPerformed(java.awt.event.ActionEvent evt) {
 				AceptButtonActionPerformed(evt);
 			}
 		});
@@ -170,7 +170,7 @@ import javax.swing.*;
 		this.setVisible(false);
 	}// GEN-LAST:event_AceptButtonActionPerformed
 
-	public String getDescription() {
+	@Override public String getDescription() {
 		return stringDatabase.getString("Learning.PC.IndependenceTest.Short") + ": " + independenceTesterComboBox
 				.getSelectedItem() + "\r\n" + stringDatabase.getString("Learning.PC.SignificanceLevel") + ": "
 				+ significanceLevel + "\r\n" + stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter;

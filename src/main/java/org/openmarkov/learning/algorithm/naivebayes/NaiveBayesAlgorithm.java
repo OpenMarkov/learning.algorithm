@@ -32,7 +32,7 @@ public class NaiveBayesAlgorithm extends LearningAlgorithm implements IDiscrimin
     }
     
     
-    public void init(ModelNetUse modelNetUse) {
+    @Override public void init(ModelNetUse modelNetUse) {
         setRelationsForRootVariable();
     }
     

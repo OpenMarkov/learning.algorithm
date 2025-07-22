@@ -740,10 +740,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         );
     }
     
-    public void undoableEditWillHappen(UndoableEditEvent event) {
+    @Override public void undoableEditWillHappen(UndoableEditEvent event) {
     }
     
-    public void undoEditHappened(UndoableEditEvent event) {
+    @Override public void undoEditHappened(UndoableEditEvent event) {
         UndoableEdit edit = event.getEdit();
         Node nodeX, nodeY;
         double linkScore;
@@ -770,7 +770,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         resetHistory();
     }
     
-    public void undoableEditHappened(UndoableEditEvent event) {
+    @Override public void undoableEditHappened(UndoableEditEvent event) {
         
         UndoableEdit edit = event.getEdit();
         Node nodeX, nodeY;
@@ -821,7 +821,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     /**
      * Returns the motivation of the edit. The motivation is a string
      */
-    public LearningEditMotivation getMotivation(PNEdit edit) {
+    @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         Node nodeX, nodeY, nodeZ;
         LearningEditMotivation motivation = null;
         if (edit instanceof RemoveLinkEdit) {

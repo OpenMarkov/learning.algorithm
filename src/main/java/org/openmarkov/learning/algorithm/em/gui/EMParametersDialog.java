@@ -62,7 +62,7 @@ import javax.swing.*;
 				"Alpha parameter used during structural learning. The parameter must be within the range [0 ,1]. A value of 1 corresponds to the Laplace correction whereas a value of 0 corresponds to using no correction at all.");
 		AceptButton.setText("Ok");
 		AceptButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
+			@Override public void actionPerformed(java.awt.event.ActionEvent evt) {
 				AceptButtonActionPerformed(evt);
 			}
 		});
@@ -121,7 +121,7 @@ import javax.swing.*;
 		this.setVisible(false);
 	}// GEN-LAST:event_AceptButtonActionPerformed
 
-	public String getDescription() {
+	@Override public String getDescription() {
 		return stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter;
 	}
 
