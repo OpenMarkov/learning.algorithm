@@ -85,7 +85,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * that can be done to the network that is being learnt.
 	 *
 	 * @param onlyAllowedEdits  If this parameter is true, only those edits
-	 *                          that do not provoke a ConstraintViolationException are returned
+	 *                          that do not provoke a ConstraintViolated are returned
 	 * @param onlyPositiveEdits If this parameter is true, only those
 	 *                          edits with a positive associated score are returned.
 	 * @return <code>LearningEditProposal</code> with the best edit and its score.
@@ -100,7 +100,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * that can be done to the network that is being learnt.
 	 *
 	 * @param onlyAllowedEdits  If this parameter is true, only those edits
-	 *                          that do not provoke a ConstraintViolationException are returned
+	 *                          that do not provoke a ConstraintViolated are returned
 	 * @param onlyPositiveEdits If this parameter is true, only those
 	 *                          edits with a positive associated score are returned.
 	 * @return <code>LearningEditProposal</code> with the best edit and its score.
