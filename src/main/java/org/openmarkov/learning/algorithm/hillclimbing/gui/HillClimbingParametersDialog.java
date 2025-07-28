@@ -19,6 +19,7 @@ import org.openmarkov.learning.gui.AlgorithmParametersDialog;
 import javax.swing.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Set;
 
 /**
@@ -178,5 +179,24 @@ import java.util.Set;
 			e.printStackTrace();
 		}
 		return new HillClimbingAlgorithm(probNet, database, Double.parseDouble(alphaParameter), metricInstance);
+	}
+	@Override public ArrayList<Object> getOptions(){
+		ArrayList<Object> options=new ArrayList<>();
+		options.add(Double.parseDouble(alphaParameter));
+		Metric metricInstance = null;
+		try {
+			Constructor<?>[] constructors = metricManager.getMetricByName(metric).getConstructors();
+			for (Constructor<?> constructor : constructors) {
+				Class<?>[] parameterTypes = constructor.getParameterTypes();
+				if (parameterTypes.length == 1 && parameterTypes[0] == double.class)
+					metricInstance = (Metric) constructor.newInstance(Double.parseDouble(alphaParameter));
+				else if (parameterTypes.length == 0)
+					metricInstance = (Metric) constructor.newInstance();
+			}
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		options.add(metricInstance);
+		return options;
 	}
 }

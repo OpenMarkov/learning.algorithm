@@ -46,7 +46,10 @@ public class ForestAugmentedNBParametersDialog extends AlgorithmParametersDialog
 
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new ForestAugmentedNBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),0.0);
+        return new ForestAugmentedNBAlgorithm(probNet, database,
+                getMetricByName(conditionedMetric),
+                getMetricByName(unconditionedMetric),
+                Double.parseDouble(alphaParameter));
     }
 
     private Metric getMetricByName(String metricName){
@@ -67,6 +70,14 @@ public class ForestAugmentedNBParametersDialog extends AlgorithmParametersDialog
                                 getStringFromCamelCaseExpression(conditionedMetric),
                         stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter
                 ).toArray());
+    }
+    @Override
+    public ArrayList<Object> getOptions(){
+        ArrayList<Object> options=new ArrayList<>();
+        options.add(getMetricByName(conditionedMetric));
+        options.add(getMetricByName(unconditionedMetric));
+        options.add(Double.parseDouble(alphaParameter));
+        return options;
     }
 
     public String getMetric() {

@@ -15,6 +15,7 @@ import org.openmarkov.learning.gui.AlgorithmConfiguration;
 import org.openmarkov.learning.gui.AlgorithmParametersDialog;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * This abstract class represents the dialog that shows the user the options and
@@ -133,5 +134,11 @@ import javax.swing.*;
 
 	@Override public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
 		return new EMAlgorithm(probNet, database, Double.parseDouble(alphaParameter));
+	}
+
+	@Override public ArrayList<Object> getOptions(){
+		ArrayList<Object> options=new ArrayList<>();
+		options.add(Double.parseDouble(alphaParameter));
+		return options;
 	}
 }

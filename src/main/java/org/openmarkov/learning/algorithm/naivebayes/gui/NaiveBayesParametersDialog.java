@@ -51,7 +51,12 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
         return new NaiveBayesAlgorithm(probNet, database, Double.parseDouble(alphaParameter));
     }
 
-
+    @Override
+    public ArrayList<Object> getOptions(){
+        ArrayList<Object> options=new ArrayList<>();
+        options.add(Double.parseDouble(alphaParameter));
+        return options;
+    }
 
     private void initComponents() {
         jPanel1 = new JPanel();

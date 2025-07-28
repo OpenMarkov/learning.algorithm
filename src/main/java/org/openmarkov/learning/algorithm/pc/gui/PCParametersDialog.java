@@ -23,6 +23,7 @@ import org.openmarkov.learning.gui.AlgorithmConfiguration;
 import org.openmarkov.learning.gui.AlgorithmParametersDialog;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * This abstract class represents the dialog that shows the user the options and
@@ -193,5 +194,15 @@ import javax.swing.*;
 	@Override public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
 		return new PCAlgorithm(probNet, database, Double.parseDouble(alphaParameter),
 				new CrossEntropyIndependenceTester(), Double.parseDouble(significanceLevel));
+	}
+
+	@Override
+	public ArrayList<Object> getOptions(){
+		ArrayList<Object> options=new ArrayList<>();
+		options.add(Double.parseDouble(alphaParameter));
+		CrossEntropyIndependenceTester tester=new CrossEntropyIndependenceTester();
+		options.add(tester);
+		options.add(Double.parseDouble(significanceLevel));
+		return options;
 	}
 }

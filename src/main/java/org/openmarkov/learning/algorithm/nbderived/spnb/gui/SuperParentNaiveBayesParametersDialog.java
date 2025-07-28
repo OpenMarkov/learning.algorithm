@@ -61,9 +61,24 @@ public class SuperParentNaiveBayesParametersDialog extends AlgorithmParametersDi
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }
-        return new SuperParentNBAlgorithm(probNet, database, metricInstance, 0.0, sameSPCheckbox.isSelected());
+        return new SuperParentNBAlgorithm(probNet, database, metricInstance,
+                Double.parseDouble(alphaParameter),
+                sameSPCheckbox.isSelected());
     }
-
+    @Override
+    public ArrayList<Object> getOptions(){
+        ArrayList<Object> options=new ArrayList<>();
+        Metric metricInstance = null;
+        try {
+            metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors()).iterator().next().newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        options.add(metricInstance);
+        options.add(Double.parseDouble(alphaParameter));
+        options.add(sameSPCheckbox.isSelected());
+        return options;
+    }
 
 
     public String getMetric() {

@@ -174,9 +174,19 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
 
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new KDBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),0.0, kValue);
+        return new KDBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),
+                Double.parseDouble(alphaParameter), Integer.valueOf(kValueField.getText()));
     }
 
+    @Override
+    public ArrayList<Object> getOptions(){
+        ArrayList<Object> options=new ArrayList<>();
+        options.add(getMetricByName(conditionedMetric));
+        options.add(getMetricByName(unconditionedMetric));
+        options.add(Double.parseDouble(alphaParameter));
+        options.add(Integer.valueOf(kValueField.getText()));
+        return options;
+    }
     private Metric getMetricByName(String metricName){
         Metric metric = null;
         try{

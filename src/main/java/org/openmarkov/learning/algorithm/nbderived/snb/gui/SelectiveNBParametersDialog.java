@@ -64,9 +64,25 @@ public class SelectiveNBParametersDialog extends AlgorithmParametersDialog {
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }
-        return new SelectiveNBAlgorithm(probNet, database, metricInstance, 0.0, forwardCheckbox.isSelected());
+        return new SelectiveNBAlgorithm(probNet, database, metricInstance,
+                Double.parseDouble(alphaParameter),
+                forwardCheckbox.isSelected());
     }
 
+    @Override
+    public ArrayList<Object> getOptions(){
+        ArrayList<Object> options=new ArrayList<>();
+        Metric metricInstance = null;
+        try {
+            metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors()).iterator().next().newInstance();
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        options.add(metricInstance);
+        options.add(Double.parseDouble(alphaParameter));
+        options.add(forwardCheckbox.isSelected());
+        return options;
+    }
 
 
     public String getMetric() {
