@@ -48,7 +48,7 @@ public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
 
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        return new NaiveBayesAlgorithm(probNet, database, 0.0);
+        return new NaiveBayesAlgorithm(probNet, database, Double.parseDouble(alphaParameter));
     }
 
 
