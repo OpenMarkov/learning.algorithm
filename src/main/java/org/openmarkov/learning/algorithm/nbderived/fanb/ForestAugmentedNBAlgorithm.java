@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true)
+@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     

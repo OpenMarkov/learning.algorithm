@@ -41,7 +41,7 @@ import java.util.concurrent.Callable;
  * @author Iñigo
  */
 //TODO: This learning algorith is disabled
-@LearningAlgorithmType(name = "Expectation maximization (EM)", supportsUnobservedVariables = true)
+@LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
     
     private static final double EPSILON = 0.00001;
@@ -83,7 +83,7 @@ public class EMAlgorithm extends LearningAlgorithm {
         try {
             inferenceAlgorithm = new HuginPropagation(expandedNet);
             inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
-        } catch (NotEvaluableNetworkException e1) {
+        } catch (NotEvaluableNetworkException.NotApplicableNetwork|NotEvaluableNetworkException.UnsatisfiedContraints e1) {
             e1.printStackTrace();
         }
         
@@ -256,7 +256,7 @@ public class EMAlgorithm extends LearningAlgorithm {
                     if (!stateName.equals("?")) {
                         caseEvidence.addFinding(expandedNet, variable.getName(), stateName);
                     }
-                } catch (IncompatibleEvidenceException e) {
+                } catch (IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther e) {
                     e.printStackTrace();
                 }
             }

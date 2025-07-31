@@ -14,7 +14,7 @@ import org.openmarkov.learning.core.util.ModelNetUse;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@LearningAlgorithmType(name = "Naive bayes", discriminative = true)
+@LearningAlgorithmType(name = "Naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class NaiveBayesAlgorithm extends LearningAlgorithm implements IDiscriminativeBayes {
     
     

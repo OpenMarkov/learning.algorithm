@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@LearningAlgorithmType(name = "Superparent naive bayes", discriminative = true)
+@LearningAlgorithmType(name = "Superparent naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
     
     

@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "K-Dependence bayesian classifier", discriminative = true)
+@LearningAlgorithmType(name = "K-Dependence bayesian classifier", discriminative = true, supportsUnobservedVariables = false)
 public class KDBAlgorithm extends DiscriminativeAlgorithm {
     
     

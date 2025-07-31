@@ -38,7 +38,7 @@ import java.util.List;
  * @version 1.1
  * @since OpenMarkov 1.0
  */
-@LearningAlgorithmType(name = "Hill climbing")
+@LearningAlgorithmType(name = "Hill climbing", discriminative = false, supportsUnobservedVariables = false)
 public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 
 	/**

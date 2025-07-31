@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "Tree augmented naive bayes", discriminative = true)
+@LearningAlgorithmType(name = "Tree augmented naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     /**

@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@LearningAlgorithmType(name = "Selective naive bayes", discriminative = true)
+@LearningAlgorithmType(name = "Selective naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
     
     /**

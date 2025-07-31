@@ -37,7 +37,7 @@ import java.util.*;
  * <li>REMAINING_LINKS_ORIENTATION: Orienting remaining links to maintain DAG structure</li>
  * </ol>
  */
-@LearningAlgorithmType(name = "PC")
+@LearningAlgorithmType(name = "PC", discriminative = false, supportsUnobservedVariables = false)
 public class PCAlgorithm extends IndependenceRelationsAlgorithm
         implements PNUndoableEditListener {
     
