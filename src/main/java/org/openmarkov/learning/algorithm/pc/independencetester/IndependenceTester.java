@@ -7,6 +7,7 @@
 
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
+import org.openmarkov.core.exception.InvalidArgumentException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 

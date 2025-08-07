@@ -10,6 +10,7 @@ open module org.openmarkov.learning.algorithm {
     requires org.openmarkov.learning.core;
     requires org.openmarkov.learning.gui;
     requires org.openmarkov.learning.metric;
+    requires org.jetbrains.annotations;
     
     exports org.openmarkov.learning.algorithm.scoreAndSearch;
     
