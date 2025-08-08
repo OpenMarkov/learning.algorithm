@@ -8,7 +8,6 @@
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
 import org.jetbrains.annotations.NotNull;
-import org.openmarkov.core.exception.UnreacheableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.Variable;

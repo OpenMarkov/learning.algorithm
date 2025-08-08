@@ -7,10 +7,7 @@
 
 package org.openmarkov.learning.algorithm.pc;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.openmarkov.core.action.*;
-import org.openmarkov.core.exception.*;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Link;
 import org.openmarkov.core.model.network.Node;
@@ -94,15 +91,20 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @param independenceTester Independence test method
      * @param significanceLevel  Statistical significance level
      */
-    public PCAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Double alpha, IndependenceTester independenceTester,
-                       Double significanceLevel) {
+    public PCAlgorithm(
+    		ProbNet probNet, 
+    		CaseDatabase caseDatabase, 
+    		Double alpha, 
+    		IndependenceTester independenceTester,
+            Double significanceLevel) {
+    	
         super(probNet, caseDatabase, alpha);
         this.independenceTester = independenceTester;
         this.significanceLevel = significanceLevel;
         this.probNet.getPNESupport().addUndoableEditListener(this);
         
         // Initialize cache for each node
-        probNet.getNodes().forEach(node -> cache.put(node, new HashMap<>()));
+        this.probNet.getNodes().forEach(node -> cache.put(node, new HashMap<>()));
         
         // Set initial phase
         this.phase = Phase.INITIAL_PHASE;
@@ -117,8 +119,11 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return LearningEditProposal, or null if no edits are available.
      */
     @Override
-    public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        resetHistory();
+    public LearningEditProposal getBestEdit(
+    		boolean onlyAllowedEdits, 
+    		boolean onlyPositiveEdits) {
+        
+    	resetHistory();
         
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
     }
@@ -133,7 +138,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return LearningEditProposal
      */
     @Override
-    public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+    public LearningEditProposal getNextEdit(
+    		boolean onlyAllowedEdits, 
+    		boolean onlyPositiveEdits) {
         
         LearningEditProposal bestEditProposal;
         do {
@@ -324,7 +331,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return LearningEditProposal the orientation edit
      */
     public LearningEditProposal getOrientationEdit(boolean onlyAllowedEdits) {
-        LearningEditProposal bestEdit = bestEdit = orientHeadToHeadLinks(onlyAllowedEdits);
+        LearningEditProposal bestEdit = orientHeadToHeadLinks(onlyAllowedEdits);
         if (bestEdit == null) {
             if (lastCompoundOrientationEdits.isEmpty()) {
                 phase = Phase.REMAINING_LINKS_ORIENTATION;
@@ -524,20 +531,23 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      *
      */
     private LearningEditProposal orientRemainingLinks(boolean onlyAllowedEdits) {
-        OrientLinkEdit orientLinkEdit = null;
-        LearningEditProposal editProposal;
+
+    	LearningEditProposal editProposal;
         
         // First pass: Try to orient links based on existing directed links (X → Z)
         editProposal = tryOrientFromDirectedLinks(onlyAllowedEdits);
-        if (editProposal != null) return editProposal;
+        if (editProposal != null) 
+        	return editProposal;
         
         // Second pass: Try to orient links based on existing paths (X—Z with path X→Z or Z→X)
         editProposal = tryOrientFromNonOrientedLinks(onlyAllowedEdits);
-        if (editProposal != null) return editProposal;
+        if (editProposal != null) 
+        	return editProposal;
         
         // Third pass: Try to orient non-directed links where no path exists in either direction
         editProposal = tryOrientUnorientedWithoutPath(onlyAllowedEdits);
-        if (editProposal != null) return editProposal;
+        if (editProposal != null) 
+        	return editProposal;
         
         // No valid orientation found; mark phase as finished if no edits were proposed
         if (lastOrientationEdits.isEmpty()) {
