@@ -3,7 +3,6 @@ package org.openmarkov.learning.algorithm.pc;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.openmarkov.core.exception.InvalidArgumentException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.learning.algorithm.pc.independencetester.CrossEntropyIndependenceTester;

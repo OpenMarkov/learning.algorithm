@@ -8,7 +8,6 @@
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
 import org.jetbrains.annotations.NotNull;
-import org.openmarkov.core.exception.InvalidArgumentException;
 import org.openmarkov.core.exception.UnreacheableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
@@ -76,11 +75,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         if (degreesOfFreedom <= 0)
             degreesOfFreedom = 1;
         
-        try {
-            return StatisticalUtilities.chiSquare(chiS, degreesOfFreedom); // Return the p-value
-        } catch (InvalidArgumentException e) {
-            throw new UnreacheableException(e);
-        }
+        return StatisticalUtilities.chiSquare(chiS, degreesOfFreedom); // Return the p-value
     }
     
     /**

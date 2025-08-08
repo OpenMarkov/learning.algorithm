@@ -7,8 +7,6 @@
 
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
-import org.openmarkov.core.exception.InvalidArgumentException;
-
 /**
  * The <code>StatisticalUtilities</code> class provides methods for computing the incomplete gamma function,
  * the log-gamma function, and the probability associated with the chi-square distribution.
@@ -46,9 +44,9 @@ public class StatisticalUtilities {
      * @throws IllegalArgumentException If `degreesOfFreedom` is less than or equal to 0
      * @see #gammp(double, double) For the computation of the regularized incomplete gamma function.
      */
-    static public double chiSquare(double statistic, double degreesOfFreedom) throws InvalidArgumentException {
+    static public double chiSquare(double statistic, double degreesOfFreedom) {
         if (degreesOfFreedom <= 0) {
-            throw new InvalidArgumentException(degreesOfFreedom, "degrees of freedom", "it must be greater than 0.");
+            throw new IllegalArgumentException("Degrees of freedom of chiSquare must be greater than 0.");
         }
         return (gammp(degreesOfFreedom / 2.0, statistic / 2.0));
     }
@@ -63,12 +61,12 @@ public class StatisticalUtilities {
      * @param x the value at which the incomplete gamma function is evaluated (must be >= 0)
      * @return the computed value of the incomplete gamma function P(a, x)
      */
-    static public double gammp(double a, double x) throws InvalidArgumentException {
+    static public double gammp(double a, double x) {
         if (x < 0.0) {
-            throw new InvalidArgumentException(x, "x", "must be greater or equal to 0");
+            throw new IllegalArgumentException("x (second argument of gammp) must be greater or equal to 0");
         }
         if (a <= 0.0) {
-            throw new InvalidArgumentException(a, "a", "must be greater than 0");
+            throw new IllegalArgumentException("a (first argument of gammp) must be greater than 0");
         }
         if (x < (a + 1.0)) {
             return gser(a, x); // Use the series approximation
@@ -86,9 +84,9 @@ public class StatisticalUtilities {
      * @param x the value at which the incomplete gamma function is evaluated (must be >= 0)
      * @return the computed value of the series approximation of P(a, x)
      */
-    static public double gser(double a, double x) throws InvalidArgumentException {
+    static public double gser(double a, double x) {
         if (x < 0.0) {
-            throw new InvalidArgumentException(x, "x", "it should be greater or equal to 0");
+            throw new IllegalArgumentException("x (second argument of gser) should be greater or equal to 0");
         }
         if (x == 0.0) {
             return 0.0;
@@ -122,7 +120,7 @@ public class StatisticalUtilities {
      * @param x the value at which the incomplete gamma function is evaluated
      * @return the computed value of the complementary incomplete gamma function Q(a, x)
      */
-    static public double gammaCI(double a, double x) throws InvalidArgumentException {
+    static public double gammaCI(double a, double x) {
         double gammaLn = gammaLn(a);
         double b = x + 1.0 - a;
         double c = 1.0 / MIN_FLOAT;
@@ -162,9 +160,9 @@ public class StatisticalUtilities {
      * @return the computed value of ln(Gamma(xx))
      * @throws IllegalArgumentException if 'xx' is non-positive
      */
-    static public double gammaLn(double xx) throws InvalidArgumentException {
+    static public double gammaLn(double xx) {
         if (xx <= 0) {
-            throw new InvalidArgumentException(xx, "xx", "it must be greater than 0");
+            throw new IllegalArgumentException("xx must be greater than 0");
         }
         
         double[] cof = {
