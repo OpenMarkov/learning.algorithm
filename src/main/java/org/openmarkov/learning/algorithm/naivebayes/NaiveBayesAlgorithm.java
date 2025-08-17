@@ -26,7 +26,7 @@ public class NaiveBayesAlgorithm extends LearningAlgorithm implements IDiscrimin
     @Override
     public void setRelationsForRootVariable() {
         Node root = this.getRootNode();
-        this.getNonRootNodes().stream().forEach(node -> {
+        this.getNonRootNodes().forEach(node -> {
             probNet.addLink(root, node, true);
         });
     }

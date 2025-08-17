@@ -75,8 +75,8 @@ public class EMAlgorithm extends LearningAlgorithm {
         
         HashMap<Potential, TablePotential> expertKnowledge = new HashMap<Potential, TablePotential>();
         
-        for (Potential potential : potentials) {
-            expertKnowledge.put(potential, new TablePotential((TablePotential) potential));
+        for (TablePotential potential : potentials) {
+            expertKnowledge.put(potential, new TablePotential(potential));
         }
         
         HuginPropagation inferenceAlgorithm = null;
@@ -141,9 +141,9 @@ public class EMAlgorithm extends LearningAlgorithm {
             // Calculate new log likelihood
             lastLogLikelihood = currentLogLikelihood;
             currentLogLikelihood = 0.0;
-            for (Potential potential : potentials) {
+            for (TablePotential potential : potentials) {
                 TablePotential expectedCounts = expectedCountsMap.get(potential);
-                double[] theta = ((TablePotential) potential).values;
+                double[] theta = potential.values;
                 for (int i = 0; i < theta.length; ++i) {
                     if (expectedCounts.values[i] > 0) {
                         currentLogLikelihood += expectedCounts.values[i] * Math.log(theta[i]);

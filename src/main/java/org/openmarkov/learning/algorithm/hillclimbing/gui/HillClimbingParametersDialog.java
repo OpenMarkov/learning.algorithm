@@ -175,7 +175,7 @@ import java.util.Set;
 				else if (parameterTypes.length == 0)
 					metricInstance = (Metric) constructor.newInstance();
 			}
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			e.printStackTrace();
 		}
 		return new HillClimbingAlgorithm(probNet, database, Double.parseDouble(alphaParameter), metricInstance);
@@ -193,7 +193,7 @@ import java.util.Set;
 				else if (parameterTypes.length == 0)
 					metricInstance = (Metric) constructor.newInstance();
 			}
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			e.printStackTrace();
 		}
 		options.add(metricInstance);

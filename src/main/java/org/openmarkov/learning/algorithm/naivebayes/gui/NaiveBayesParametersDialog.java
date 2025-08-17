@@ -18,8 +18,8 @@ import java.util.List;
 @SuppressWarnings("serial")
 @AlgorithmConfiguration(algorithm = NaiveBayesAlgorithm.class)
 public class NaiveBayesParametersDialog extends AlgorithmParametersDialog {
-
-    private static String LINE_SEPARATOR = System.getProperty("line.separator");
+    
+    private static String LINE_SEPARATOR = System.lineSeparator();
     
     private String unconditionedMetric = "MutualInformation";
     private static String alphaParameter = "0.5";
