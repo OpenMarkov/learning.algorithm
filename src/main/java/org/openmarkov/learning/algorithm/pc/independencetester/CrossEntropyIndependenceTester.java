@@ -30,16 +30,16 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
     /**
      * This method computes the value of the independence test for two nodes
      *
-     * @param nodeX           <code>Node</code> first variable.
-     * @param nodeY           <code>Node</code> second variable.
-     * @param adjacencySubset <code>List</code> of <code>Node</code>
+     * @param nodeX           {@code Node} first variable.
+     * @param nodeY           {@code Node} second variable.
+     * @param adjacencySubset {@code List} of {@code Node}
      *                        representing the separation set (i.e. the conditional set).
      * @return the score obtained in the independence test.
      */
     @Override
     public double test(@NotNull CaseDatabase caseDatabase, @NotNull Node nodeX, @NotNull Node nodeY, @NotNull List<Node> adjacencySubset) {
         long numStatesAdjacency = 1;
-        double crossEntropy, chiS;
+        double chiS;
         
         // nodesYZ = {Y, Z1, Z2, ..., Zn}
         // nodesZ  = {Z1, Z2, ..., Zn}
@@ -57,11 +57,11 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         long potentialSize = numStatesAdjacency * nodeX.getVariable().getNumStates() * nodeY.getVariable()
                                                                                             .getNumStates();
         // Compute the cross-entropy between X and Y given Z
-        crossEntropy = crossEntropy(caseDatabase, nodeX, nodeY, nodesYZ, nodesZ);
+        double crossEntropy = crossEntropy(caseDatabase, nodeX, nodeY, nodesYZ, nodesZ);
         // Compute the chi-square statistic
         chiS = 2.0 * caseDatabase.getNumCases() * crossEntropy;
         // Prevent numerical instabilities near zero
-        chiS = (Math.abs(chiS) < 1e-10) ? 0.0 : chiS;
+        chiS = (Math.abs(chiS) < 1.0e-10) ? 0.0 : chiS;
         
         // Compute degrees of freedom: (#states(Z)) * (|X|-1) * (|Y|-1)
         long degreesOfFreedom = numStatesAdjacency * (nodeX.getVariable().getNumStates() - 1) * (
@@ -88,8 +88,8 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
      * @param nodesZ       The conditional set Z
      * @return the cross entropy between the two nodes X and Y given the conditional set Z
      */
-    private double crossEntropy(CaseDatabase caseDatabase, Node nodeX, Node nodeY,
-                                List<Node> nodesYZ, List<Node> nodesZ) {
+    private static double crossEntropy(CaseDatabase caseDatabase, Node nodeX, Node nodeY,
+                                       List<Node> nodesYZ, List<Node> nodesZ) {
         return (
                 conditionedEntropy(caseDatabase, nodeX, nodesZ) - conditionedEntropy(caseDatabase, nodeX, nodesYZ)
         );
@@ -117,7 +117,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
      * @param adjacencySubset The conditional set
      * @return The conditioned entropy
      */
-    private double conditionedEntropy(CaseDatabase caseDatabase, Node nodeX, List<Node> adjacencySubset) {
+    private static double conditionedEntropy(CaseDatabase caseDatabase, Node nodeX, List<Node> adjacencySubset) {
         int numCases = caseDatabase.getNumCases();
         int numStates = nodeX.getVariable().getNumStates();
         
@@ -160,12 +160,12 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
      * configurations of the given nodes.
      *
      * @param caseDatabase case database
-     * @param nodeList     <code>List</code> formed by the node and its parents.
-     * @return <code>TablePotential</code> with the absolute frequencies in the
+     * @param nodeList     {@code List} formed by the node and its parents.
+     * @return {@code TablePotential} with the absolute frequencies in the
      * database of each of the configurations of the given node and its
      * parents.
      */
-    private TablePotential absoluteFrequencies(CaseDatabase caseDatabase, List<Node> nodeList) {
+    private static TablePotential absoluteFrequencies(CaseDatabase caseDatabase, List<Node> nodeList) {
         
         int numNodes = nodeList.size();
         List<Variable> variables = new ArrayList<>();

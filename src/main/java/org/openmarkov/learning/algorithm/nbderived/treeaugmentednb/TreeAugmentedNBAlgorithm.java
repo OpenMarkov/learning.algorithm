@@ -45,7 +45,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      *                          that do not provoke a ConstraintViolated are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
-     * @return <code>LearningEditProposal</code> with the best edit and its score.
+     * @return {@code LearningEditProposal} with the best edit and its score.
      */
     @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         resetHistory();
@@ -88,7 +88,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      *                          that do not provoke a ConstraintViolated are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
-     * @return <code>LearningEditProposal</code> with the best edit and its score.
+     * @return {@code LearningEditProposal} with the best edit and its score.
      */
     @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
@@ -114,7 +114,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * Method to obtain the edit with the highest associated score.
      *
      * @param learnedNet net to learn.
-     * @return <code>PNEdit</code> edit with the highest associated score.
+     * @return {@code PNEdit} edit with the highest associated score.
      */
     private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
                                                 boolean onlyPositiveEdits) {

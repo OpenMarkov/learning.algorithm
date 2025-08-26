@@ -8,7 +8,7 @@
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
 /**
- * The <code>StatisticalUtilities</code> class provides methods for computing the incomplete gamma function,
+ * The {@code StatisticalUtilities} class provides methods for computing the incomplete gamma function,
  * the log-gamma function, and the probability associated with the chi-square distribution.
  */
 public class StatisticalUtilities {
@@ -126,7 +126,6 @@ public class StatisticalUtilities {
         double c = 1.0 / MIN_FLOAT;
         double d = 1.0 / b;
         double h = d;
-        double gammcf;
         
         int i;
         for (i = 1; i <= MAX_ITERATIONS; i++) {
@@ -146,7 +145,7 @@ public class StatisticalUtilities {
         }
         if (i > MAX_ITERATIONS)
             System.out.println("Convergence not reached in 'gcf' after " + MAX_ITERATIONS + " iterations. Parameter a is too large, MAX_ITERATIONS too small in routine gcf.");
-        gammcf = Math.exp(-x + a * Math.log(x) - gammaLn) * h;
+        double gammcf = Math.exp(-x + a * Math.log(x) - gammaLn) * h;
         return gammcf;
     }
     

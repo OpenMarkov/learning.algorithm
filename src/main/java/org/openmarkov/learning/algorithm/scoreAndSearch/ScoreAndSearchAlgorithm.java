@@ -16,7 +16,7 @@ import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
  * This class implements the basic structure of any algorithm based on the
  * score-and-search approach.
  * The particular behavior of each algorithm is given by the
- * <code>editionsGenerator</code> class.
+ * {@code editionsGenerator} class.
  *
  * @author joliva
  * @author manuel

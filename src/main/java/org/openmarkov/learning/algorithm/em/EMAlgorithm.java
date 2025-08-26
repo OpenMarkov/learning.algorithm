@@ -88,7 +88,7 @@ public class EMAlgorithm extends LearningAlgorithm {
         }
         
         double lastLogLikelihood = Double.NEGATIVE_INFINITY;
-        double currentLogLikelihood = Double.NEGATIVE_INFINITY;
+        double currentLogLikelihood;
         
         int iterations = 0;
         do {
@@ -101,16 +101,14 @@ public class EMAlgorithm extends LearningAlgorithm {
             for (int i = 0; i < cases.length; ++i) {
                 Map<Variable, TablePotential> jointProbabilities =
                         new JointProbabilityCalculator(variables, cases[i], inferenceAlgorithm, expandedNet).call();
-                if (jointProbabilities != null) {
-                    notNull++;
-                    System.out.println(notNull + " from " + i);
-                    for (Potential potential : potentials) {
-                        TablePotential jointProbability = jointProbabilities.get(potential.getVariable(0));
-                        if (expectedCountsMap.containsKey(potential)) {
-                            sum(expectedCountsMap.get(potential), jointProbability);
-                        } else {
-                            expectedCountsMap.put(potential, jointProbability);
-                        }
+                notNull++;
+                System.out.println(notNull + " from " + i);
+                for (Potential potential : potentials) {
+                    TablePotential jointProbability = jointProbabilities.get(potential.getVariable(0));
+                    if (expectedCountsMap.containsKey(potential)) {
+                        sum(expectedCountsMap.get(potential), jointProbability);
+                    } else {
+                        expectedCountsMap.put(potential, jointProbability);
                     }
                 }
                 // accruedWeights.add (inferenceAlgorithm.getAccruedWeight ());
@@ -139,7 +137,6 @@ public class EMAlgorithm extends LearningAlgorithm {
             }
             
             // Calculate new log likelihood
-            lastLogLikelihood = currentLogLikelihood;
             currentLogLikelihood = 0.0;
             for (TablePotential potential : potentials) {
                 TablePotential expectedCounts = expectedCountsMap.get(potential);
@@ -162,7 +159,7 @@ public class EMAlgorithm extends LearningAlgorithm {
         return probNet;
     }
     
-    private void sum(TablePotential tablePotential, TablePotential jointProbability) {
+    private static void sum(TablePotential tablePotential, TablePotential jointProbability) {
         double[] tablePotentialValues = tablePotential.values;
         double[] jointProbabilityValues = jointProbability.values;
         
@@ -171,43 +168,44 @@ public class EMAlgorithm extends LearningAlgorithm {
         }
     }
     
-    private ProbNet adaptNetwork(ProbNet probNet, List<TablePotential> potentials,
-                                 Map<ICIPotential, List<TablePotential>> iciSubpotentials) {
+    private static ProbNet adaptNetwork(ProbNet probNet, List<TablePotential> potentials,
+                                        Map<ICIPotential, List<TablePotential>> iciSubpotentials) {
         ProbNet expandedNet = probNet.copy();
         for (Potential potential : expandedNet.getPotentials()) {
             if (potential.getPotentialRole() == PotentialRole.CONDITIONAL_PROBABILITY) {
-                if (potential instanceof UniformPotential) {
-                    TablePotential newPotential = new TablePotential((TablePotential) potential);
-                    potentials.add(newPotential);
-                    expandedNet.getNode(potential.getVariable(0)).setPotential(newPotential);
-                } else if (potential instanceof ICIPotential) {
-                    ICIPotential iciPotential = (ICIPotential) potential;
-                    List<TablePotential> noisyPotentials = iciPotential.getNoisyPotentials();
-                    iciSubpotentials.put(iciPotential, noisyPotentials);
-                    potentials.addAll(noisyPotentials);
-                    
-                    Variable conditioningVariable = potential.getVariable(0);
-                    for (TablePotential noisyPotential : noisyPotentials) {
-                        Variable zVariable = noisyPotential.getVariable(0);
-                        Variable parentVariable = noisyPotential.getVariable(1);
-                        expandedNet.addNode(zVariable, NodeType.CHANCE);
-                        expandedNet.removeLink(parentVariable, conditioningVariable, true);
-                        expandedNet.addLink(parentVariable, zVariable, true);
-                        expandedNet.addLink(zVariable, conditioningVariable, true);
-                        expandedNet.getNode(zVariable).setPotential(noisyPotential);
+                switch (potential) {
+                    case UniformPotential uniformPotential -> {
+                        TablePotential newPotential = new TablePotential((TablePotential) potential);
+                        potentials.add(newPotential);
+                        expandedNet.getNode(potential.getVariable(0)).setPotential(newPotential);
                     }
-                    
-                    TablePotential leakyPotential = iciPotential.getLeakyPotential();
-                    if (leakyPotential != null) {
-                        Variable leakyVariable = leakyPotential.getVariable(0);
-                        expandedNet.addNode(leakyVariable, NodeType.CHANCE);
-                        expandedNet.getNode(leakyVariable).setPotential(leakyPotential);
-                        expandedNet.addLink(leakyVariable, conditioningVariable, true);
+                    case ICIPotential iciPotential -> {
+                        List<TablePotential> noisyPotentials = iciPotential.getNoisyPotentials();
+                        iciSubpotentials.put(iciPotential, noisyPotentials);
+                        potentials.addAll(noisyPotentials);
+                        
+                        Variable conditioningVariable = potential.getVariable(0);
+                        for (TablePotential noisyPotential : noisyPotentials) {
+                            Variable zVariable = noisyPotential.getVariable(0);
+                            Variable parentVariable = noisyPotential.getVariable(1);
+                            expandedNet.addNode(zVariable, NodeType.CHANCE);
+                            expandedNet.removeLink(parentVariable, conditioningVariable, true);
+                            expandedNet.addLink(parentVariable, zVariable, true);
+                            expandedNet.addLink(zVariable, conditioningVariable, true);
+                            expandedNet.getNode(zVariable).setPotential(noisyPotential);
+                        }
+                        TablePotential leakyPotential = iciPotential.getLeakyPotential();
+                        if (leakyPotential != null) {
+                            Variable leakyVariable = leakyPotential.getVariable(0);
+                            expandedNet.addNode(leakyVariable, NodeType.CHANCE);
+                            expandedNet.getNode(leakyVariable).setPotential(leakyPotential);
+                            expandedNet.addLink(leakyVariable, conditioningVariable, true);
+                        }
+                        expandedNet.getNode(conditioningVariable).setPotential(iciPotential.getFFunctionPotential());
                     }
-                    expandedNet.getNode(conditioningVariable).setPotential(iciPotential.getFFunctionPotential());
-                    
-                } else if (potential instanceof TablePotential) {
-                    potentials.add((TablePotential) potential);
+                    case TablePotential tablePotential -> potentials.add(tablePotential);
+                    default -> {
+                    }
                 }
             }
         }
@@ -224,7 +222,7 @@ public class EMAlgorithm extends LearningAlgorithm {
         return null;
     }
     
-    private class JointProbabilityCalculator implements Callable<Map<Variable, TablePotential>> {
+    private static class JointProbabilityCalculator implements Callable<Map<Variable, TablePotential>> {
         private List<Variable> variables;
         private int[] dataCase;
         private HuginPropagation inferenceAlgorithm;

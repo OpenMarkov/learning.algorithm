@@ -118,8 +118,8 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
         }
         return redirectedTree;
     }
-
-    private List<BaseLinkEdit> getEditsForVariable(List<BaseLinkEdit> list, Variable v){
+    
+    private static List<BaseLinkEdit> getEditsForVariable(List<BaseLinkEdit> list, Variable v) {
         return  list.stream().filter(edit -> edit.getVariable1()==v || edit.getVariable2()==v).collect(Collectors.toList());
     }
 

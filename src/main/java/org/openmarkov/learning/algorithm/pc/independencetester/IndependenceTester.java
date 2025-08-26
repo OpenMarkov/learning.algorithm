@@ -22,9 +22,9 @@ public interface IndependenceTester {
     /**
      * Tests the dependency level of two variables A and B given an adjacency set of variables Z.
      *
-     * @param caseDatabase    <code>caseDatabase</code> case database
-     * @param node2           <code>Node</code> second variable.
-     * @param adjacencySubset <code>ArrayList</code> of <code>Node</code>
+     * @param caseDatabase    {@code caseDatabase} case database
+     * @param node2           {@code Node} second variable.
+     * @param adjacencySubset {@code ArrayList} of {@code Node}
      *                        representing the separation set (i.e. the conditional set).
      * @return the score obtained in the independence test.
      */

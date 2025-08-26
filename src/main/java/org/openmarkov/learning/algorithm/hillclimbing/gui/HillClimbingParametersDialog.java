@@ -31,7 +31,7 @@ import java.util.Set;
 @SuppressWarnings("serial") @AlgorithmConfiguration(algorithm = HillClimbingAlgorithm.class) public class HillClimbingParametersDialog
 		extends AlgorithmParametersDialog {
 	// Default values for Metric and alpha parameter
-	private MetricManager metricManager = null;
+    private MetricManager metricManager;
 	private String metric = "";
 	private String alphaParameter = "0.5";
 	// Variables declaration - do not modify//GEN-BEGIN:variables

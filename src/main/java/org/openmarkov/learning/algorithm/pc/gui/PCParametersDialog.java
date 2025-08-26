@@ -176,16 +176,16 @@ import java.util.ArrayList;
 				.getSelectedItem() + "\r\n" + stringDatabase.getString("Learning.PC.SignificanceLevel") + ": "
 				+ significanceLevel + "\r\n" + stringDatabase.getString("Learning.Alpha") + ": " + alphaParameter;
 	}
-
-	public String getIndependenceTester() {
+    
+    public static String getIndependenceTester() {
 		return independenceTester;
 	}
-
-	public String getDegreeOfAccuracy() {
+    
+    public static String getDegreeOfAccuracy() {
 		return significanceLevel;
 	}
-
-	public String getAlphaParameter() {
+    
+    public static String getAlphaParameter() {
 		return alphaParameter;
 	}
 

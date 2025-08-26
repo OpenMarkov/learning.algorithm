@@ -158,7 +158,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      */
     public LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         int adjacencySize = 0;
-        LearningEditProposal bestEditProposal = null;
+        LearningEditProposal bestEditProposal;
         
         while (maxOfAdjacencies() > adjacencySize) {
             bestEditProposal = findBestEditInCurrentPhase(adjacencySize, onlyAllowedEdits, onlyPositiveEdits);
@@ -186,20 +186,15 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                                                             boolean onlyAllowedEdits,
                                                             boolean onlyPositiveEdits) {
         
-        switch (phase) {
-            case INITIAL_PHASE:
+        return switch (phase) {
+            case INITIAL_PHASE -> {
                 separationSetsLogic(adjacencySize, onlyPositiveEdits);
-                return getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
-            
-            case HEAD_TO_HEAD_ORIENTATION:
-                return getOrientationEdit(onlyAllowedEdits);
-            
-            case REMAINING_LINKS_ORIENTATION:
-                return orientRemainingLinks(onlyAllowedEdits);
-            
-            default:
-                return null;
-        }
+                yield getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
+            }
+            case HEAD_TO_HEAD_ORIENTATION -> getOrientationEdit(onlyAllowedEdits);
+            case REMAINING_LINKS_ORIENTATION -> orientRemainingLinks(onlyAllowedEdits);
+            default -> null;
+        };
     }
     
     /**
@@ -321,8 +316,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * Returns the <code>PCEditProposal</code> with the
-     * <code>DirectLinkEdit</code> depending on which stage is the algorithm.
+     * Returns the {@code PCEditProposal} with the
+     * {@code DirectLinkEdit} depending on which stage is the algorithm.
      * If the "head to head" orientations have not been done, then, the
      * DirectLinkEdit contains these edits. Else, it contains the remaining
      * orientations.
@@ -357,14 +352,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     /**
      * Returns a list of the subsets of size n of the given set
      *
-     * @param set         <code>List</code> of
-     *                    <code>Node</code> from which extract the subsets.
+     * @param set         {@code List} of
+     *                    {@code Node} from which extract the subsets.
      * @param subSetsSize size of the subsets.
-     * @return <code>List</code> of <code>List</code> of
-     * <code>Node</code>. Each <code>List</code> of <code>Node</code>
+     * @return {@code List} of {@code List} of
+     * {@code Node}. Each {@code List} of {@code Node}
      * is one of the subsets of size n.
      */
-    public List<List<Node>> subSetsOfSize(List<Node> set, int subSetsSize) {
+    public static List<List<Node>> subSetsOfSize(List<Node> set, int subSetsSize) {
         
         List<List<Node>> subSets = new ArrayList<>();
         List<Node> subSet = new ArrayList<>();
@@ -531,11 +526,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      *
      */
     private LearningEditProposal orientRemainingLinks(boolean onlyAllowedEdits) {
-
-    	LearningEditProposal editProposal;
         
         // First pass: Try to orient links based on existing directed links (X → Z)
-        editProposal = tryOrientFromDirectedLinks(onlyAllowedEdits);
+        LearningEditProposal editProposal = tryOrientFromDirectedLinks(onlyAllowedEdits);
         if (editProposal != null) 
         	return editProposal;
         
@@ -758,16 +751,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         Node nodeX, nodeY;
         double linkScore;
         
-        if (edit instanceof RemoveLinkEdit) {
+        if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             phase = Phase.INITIAL_PHASE;
-            RemoveLinkEdit removeLinkEdit = (RemoveLinkEdit) edit;
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
             List<Node> separationSet = cache.get(nodeX).get(nodeY).getSeparationSet();
             linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
             cache.get(nodeX).put(nodeY, new PCEditMotivation(linkScore, separationSet));
-        } else if (edit instanceof AddLinkEdit) {
-            AddLinkEdit addLinkEdit = (AddLinkEdit) edit;
+        } else if (edit instanceof AddLinkEdit addLinkEdit) {
             nodeX = probNet.getNode(addLinkEdit.getVariable1());
             nodeY = probNet.getNode(addLinkEdit.getVariable2());
             probNet.removeLink(nodeX, nodeY, false);
@@ -785,8 +776,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         UndoableEdit edit = event.getEdit();
         Node nodeX, nodeY;
         
-        if (edit instanceof RemoveLinkEdit) {
-            RemoveLinkEdit removeLinkEdit = (RemoveLinkEdit) edit;
+        if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
             List<Node> separationSet = new ArrayList<>();
@@ -815,8 +805,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             
         }
         //An AddLinkEdit can only be done by the user. Just undirect the link
-        if (edit instanceof AddLinkEdit) {
-            AddLinkEdit addLinkEdit = (AddLinkEdit) edit;
+        if (edit instanceof AddLinkEdit addLinkEdit) {
             nodeX = probNet.getNode(addLinkEdit.getVariable1());
             nodeY = probNet.getNode(addLinkEdit.getVariable2());
             probNet.removeLink(nodeX, nodeY, true);
@@ -834,14 +823,12 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         Node nodeX, nodeY, nodeZ;
         LearningEditMotivation motivation = null;
-        if (edit instanceof RemoveLinkEdit) {
-            RemoveLinkEdit removeLinkEdit = (RemoveLinkEdit) edit;
+        if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
             motivation = cache.get(nodeX).get(nodeY);
             
-        } else if (edit instanceof COrientLinksEdit) {
-            COrientLinksEdit compoundDirectLinkEdit = (COrientLinksEdit) edit;
+        } else if (edit instanceof COrientLinksEdit compoundDirectLinkEdit) {
             nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariable1());
             nodeZ = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariable2());
             nodeY = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)).getVariable1());

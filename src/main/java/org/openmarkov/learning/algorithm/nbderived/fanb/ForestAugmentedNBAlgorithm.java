@@ -16,7 +16,6 @@ import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 import org.openmarkov.learning.algorithm.nbderived.fanb.util.ForestAugmentedNBEditProposal;
-import org.openmarkov.learning.metric.cmi.conditional.ConditionalMutualInformationMetric;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
 import java.util.ArrayList;
@@ -77,7 +76,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      *                          that do not provoke a ConstraintViolated are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
-     * @return <code>LearningEditProposal</code> with the best edit and its score.
+     * @return {@code LearningEditProposal} with the best edit and its score.
      */
     @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         resetHistory();
@@ -106,7 +105,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      *                          that do not provoke a ConstraintViolated are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
-     * @return <code>LearningEditProposal</code> with the best edit and its score.
+     * @return {@code LearningEditProposal} with the best edit and its score.
      */
     @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
@@ -114,11 +113,11 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     @Override public void init(ModelNetUse modelNetUse) {
         kDependence = 1;
-        if (metric instanceof MutualInformationMetric) {
-            ((ConditionalMutualInformationMetric) metric).setClassVariable(this.classVariableName);
+        if (metric instanceof MutualInformationMetric miMetric) {
+            miMetric.setClassVariable(this.classVariableName);
         }
-        if (unconditionedMetric instanceof MutualInformationMetric) {
-            ((MutualInformationMetric) unconditionedMetric).setClassVariable(this.classVariableName);
+        if (unconditionedMetric instanceof MutualInformationMetric miMetric) {
+            miMetric.setClassVariable(this.classVariableName);
         }
         if (maximumWeightSpanningTree.isEmpty()) {
             buildMaximumWeightSpanningTree();
@@ -154,7 +153,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * Method to obtain the edit with the highest associated score.
      *
      * @param learnedNet net to learn.
-     * @return <code>PNEdit</code> edit with the highest associated score.
+     * @return {@code PNEdit} edit with the highest associated score.
      */
     private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
                                                 boolean onlyPositiveEdits) {

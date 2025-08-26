@@ -136,8 +136,8 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
         }
 
         try {
-
-            int k = Integer.valueOf(kValueField.getText());
+            
+            int k = Integer.parseInt(kValueField.getText());
             if(k < 0){
                 errorMessages.add(stringDatabase.getString("Learning.KDB.KIncorrectParents"));
             }
@@ -151,8 +151,8 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
                         stringDatabase.getString("ErrorWindow.Title.Label"), JOptionPane.ERROR_MESSAGE);
                 return;
         }
-
-        kValue = Integer.valueOf(kValueField.getText());
+        
+        kValue = Integer.parseInt(kValueField.getText());
         alphaParameter = alphaText.getText();
         this.setVisible(false);
     }
@@ -175,7 +175,7 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
         return new KDBAlgorithm(probNet, database, getMetricByName(conditionedMetric), getMetricByName(unconditionedMetric),
-                Double.parseDouble(alphaParameter), Integer.valueOf(kValueField.getText()));
+                                Double.parseDouble(alphaParameter), Integer.parseInt(kValueField.getText()));
     }
 
     @Override
