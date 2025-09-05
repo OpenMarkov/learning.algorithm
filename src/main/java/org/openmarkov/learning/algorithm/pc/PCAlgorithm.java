@@ -483,12 +483,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                     //Adjacent nodeX and nodeZ?
                     if (!nodeX.getNeighbors().contains(nodeZ)) {
                         // if Y is not included in the separation set of X and Z
-                        PCEditMotivation motivation = cache.get(nodeX).get(nodeZ);
-                        List<Node> separationXZ = (motivation != null) ? motivation.getSeparationSet() : null;
-                        if (separationXZ == null) {
-                            System.out.println("Warning: Separation set for " + nodeX.getName() + " and "
-                                                       + nodeZ.getName() + " is null. This may indicate an issue with the independence test.");
-                        }
+                    	Map<Node, PCEditMotivation> cacheX = cache.get(nodeX);
+                    	List<Node> separationXZ = (cacheX != null && cacheX.get(nodeZ) != null)
+                    	        ? cacheX.get(nodeZ).getSeparationSet()
+                    	        : Collections.emptyList();
                         if (separationXZ == null || !separationXZ.contains(nodeY)) {
                             //Then orient X->;Y<-Z
                             orientLinkEdit1 = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeY.getVariable(),
