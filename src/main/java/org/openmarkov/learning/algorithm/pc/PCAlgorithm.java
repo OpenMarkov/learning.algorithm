@@ -18,6 +18,7 @@ import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.StringEditMotivation;
+import org.openmarkov.learning.algorithm.pc.util.NodePair;
 
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.undo.UndoableEdit;
@@ -53,7 +54,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     /**
      * Cache for storing independence test results between nodes
      */
-    protected final Map<Node, Map<Node, PCEditMotivation>> cache = new HashMap<>();
+    protected final Map<NodePair, PCEditMotivation> cache;
     
     /**
      * History of last best edits returned.
@@ -103,10 +104,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         this.significanceLevel = significanceLevel;
         this.probNet.getPNESupport().addUndoableEditListener(this);
         
-        // Initialize cache for each node
-        this.probNet.getNodes().forEach(node -> cache.put(node, new HashMap<>()));
+        cache = new HashMap<>();
         
-        // Set initial phase
         this.phase = Phase.INITIAL_PHASE;
     }
     
@@ -216,7 +215,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                         probNet, nodeX.getVariable(), nodeY.getVariable(), false);
                 
                 if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
-                    PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
+                	PCEditMotivation motivation = cache.get(new NodePair(nodeX, nodeY));
                     
                     // Evaluate separation sets if not already cached or needs recalculation
                     if (motivation == null || (motivation.getScore() != ALREADY_DONE
@@ -266,41 +265,64 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         }
         
         if (bestScoreSeparationSet != null) {
-            cache.get(nodeX).put(nodeY, new PCEditMotivation(bestScore, bestScoreSeparationSet));
+            cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(bestScore, bestScoreSeparationSet));
         }
     }
     
     /**
-     * Returns the optimal edit from the cache.
+     * Returns the optimal edit from the cache, according to the PC algorithm.
      *
-     * @param onlyAllowedEdits
-     * @param onlyPositiveEdits
-     * @return LearningEditProposal
+     * @param onlyAllowedEdits  If true, only edits allowed by current constraints are considered.
+     * @param onlyPositiveEdits If true, only edits with score greater than the significance level are considered.
+     * @return The best {@link LearningEditProposal}, or {@code null} if none is found.
      */
     public LearningEditProposal getOptimalEditFromCache(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         PCEditMotivation bestMotivation = null;
         LearningEditProposal bestEditProposal = null;
-        
+
         for (Node nodeX : probNet.getNodes()) {
+
             for (Node nodeY : nodeX.getSiblings()) {
-                PCEditMotivation motivation = cache.get(nodeX).get(nodeY);
-                if ((motivation != null) && (motivation.getScore() != ALREADY_DONE) && (
-                        motivation.compareTo(bestMotivation) > 0
-                ) && (!onlyPositiveEdits || motivation.getScore() > significanceLevel)) {
-                    RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(probNet, nodeX.getVariable(),
-                                                                       nodeY.getVariable(), false);
-                    if (isValidEdit(removeLinkEdit, bestMotivation, onlyAllowedEdits)) {
-                        bestMotivation = motivation;
-                        bestEditProposal = new LearningEditProposal(removeLinkEdit, motivation);
-                    }
+            	PCEditMotivation motivation = cache.get(new NodePair(nodeX, nodeY));
+                if (!isCandidateMotivation(motivation, bestMotivation, onlyPositiveEdits)) {
+                    continue;
+                }
+
+                RemoveLinkEdit removeLinkEdit =
+                        new RemoveLinkEdit(probNet, nodeX.getVariable(), nodeY.getVariable(), false);
+
+                if (isValidEdit(removeLinkEdit, bestMotivation, onlyAllowedEdits)) {
+                    bestMotivation = motivation;
+                    bestEditProposal = new LearningEditProposal(removeLinkEdit, motivation);
                 }
             }
         }
+
         if (bestEditProposal != null) {
             lastRemovedEdits.add(bestEditProposal.getEdit());
         }
+
         return bestEditProposal;
     }
+
+    /**
+     * Checks whether a given motivation is a valid candidate to replace the current best.
+     */
+    private boolean isCandidateMotivation(PCEditMotivation motivation,
+                                          PCEditMotivation bestMotivation,
+                                          boolean onlyPositiveEdits) {
+        if (motivation == null) {
+            return false;
+        }
+        if (motivation.getScore() == ALREADY_DONE) {
+            return false;
+        }
+        if (onlyPositiveEdits && motivation.getScore() <= significanceLevel) {
+            return false;
+        }
+        return bestMotivation == null || motivation.compareTo(bestMotivation) > 0;
+    }
+
     
     /**
      * @param removeLinkEdit
@@ -483,10 +505,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                     //Adjacent nodeX and nodeZ?
                     if (!nodeX.getNeighbors().contains(nodeZ)) {
                         // if Y is not included in the separation set of X and Z
-                    	Map<Node, PCEditMotivation> cacheX = cache.get(nodeX);
-                    	List<Node> separationXZ = (cacheX != null && cacheX.get(nodeZ) != null)
-                    	        ? cacheX.get(nodeZ).getSeparationSet()
-                    	        : Collections.emptyList();
+                    	List<Node> separationXZ = Optional.ofNullable(cache.get(new NodePair(nodeX, nodeZ)))
+                                .map(PCEditMotivation::getSeparationSet)
+                                .orElse(Collections.emptyList());
                         if (separationXZ == null || !separationXZ.contains(nodeY)) {
                             //Then orient X->;Y<-Z
                             orientLinkEdit1 = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeY.getVariable(),
@@ -747,15 +768,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     @Override public void undoEditHappened(UndoableEditEvent event) {
         UndoableEdit edit = event.getEdit();
         Node nodeX, nodeY;
-        double linkScore;
         
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             phase = Phase.INITIAL_PHASE;
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
-            List<Node> separationSet = cache.get(nodeX).get(nodeY).getSeparationSet();
-            linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
-            cache.get(nodeX).put(nodeY, new PCEditMotivation(linkScore, separationSet));
+            List<Node> separationSet = cache.get(new NodePair(nodeX, nodeY)).getSeparationSet();
+            double linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
+            cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(linkScore, separationSet));
         } else if (edit instanceof AddLinkEdit addLinkEdit) {
             nodeX = probNet.getNode(addLinkEdit.getVariable1());
             nodeY = probNet.getNode(addLinkEdit.getVariable2());
@@ -777,27 +797,19 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
-            List<Node> separationSet = new ArrayList<>();
-            PCEditMotivation cachedScore = cache.get(nodeX).get(nodeY);
-            if (cachedScore != null) {
-                separationSet = cachedScore.getSeparationSet();
-            }
-            cache.get(nodeX).put(nodeY, new PCEditMotivation(ALREADY_DONE, separationSet));
-            cache.get(nodeY).put(nodeX, new PCEditMotivation(ALREADY_DONE, separationSet));
+
+            PCEditMotivation cachedScore = cache.get(new NodePair(nodeX, nodeY));
+            List<Node> separationSet = cachedScore != null ? cachedScore.getSeparationSet() : new ArrayList<>();
+            cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(ALREADY_DONE, separationSet));
+
             // Remove the cached values X node's neighbors that contained Y in
             // the separation set (and vice versa)
             for (Node neighborNode : nodeX.getNeighbors()) {
-                PCEditMotivation neighborScore = cache.get(nodeX).get(neighborNode);
-                if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE && neighborScore
-                        .getSeparationSet().contains(nodeY)) {
-                    cache.get(nodeX).remove(neighborNode);
-                }
-            }
-            for (Node neighborNode : nodeY.getNeighbors()) {
-                PCEditMotivation neighborScore = cache.get(nodeY).get(neighborNode);
-                if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE && neighborScore
-                        .getSeparationSet().contains(nodeX)) {
-                    cache.get(nodeY).remove(neighborNode);
+                NodePair pair = new NodePair(nodeX, neighborNode);
+                PCEditMotivation neighborScore = cache.get(pair);
+                if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE
+                        && neighborScore.getSeparationSet().contains(nodeY)) {
+                    cache.remove(pair);
                 }
             }
             
@@ -824,7 +836,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             nodeX = probNet.getNode(removeLinkEdit.getVariable1());
             nodeY = probNet.getNode(removeLinkEdit.getVariable2());
-            motivation = cache.get(nodeX).get(nodeY);
+            motivation = cache.get(new NodePair(nodeX, nodeY));
             
         } else if (edit instanceof COrientLinksEdit compoundDirectLinkEdit) {
             nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariable1());
