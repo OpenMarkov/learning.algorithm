@@ -8,6 +8,7 @@
 package org.openmarkov.learning.algorithm.em;
 
 import org.openmarkov.core.action.PNEdit;
+import org.openmarkov.core.exception.CannotNormalizePotentialException;
 import org.openmarkov.core.exception.IncompatibleEvidenceException;
 import org.openmarkov.core.exception.NotEvaluableNetworkException;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -64,7 +65,7 @@ public class EMAlgorithm extends LearningAlgorithm {
     /**
      * Parametric learning
      */
-    @Override public ProbNet parametricLearning() {
+    @Override public ProbNet parametricLearning() throws CannotNormalizePotentialException {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
         
@@ -83,7 +84,8 @@ public class EMAlgorithm extends LearningAlgorithm {
         try {
             inferenceAlgorithm = new HuginPropagation(expandedNet);
             inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
-        } catch (NotEvaluableNetworkException.NotApplicableNetwork|NotEvaluableNetworkException.UnsatisfiedContraints e1) {
+        } catch (NotEvaluableNetworkException.NotApplicableNetwork |
+                 NotEvaluableNetworkException.UnsatisfiedContraints e1) {
             e1.printStackTrace();
         }
         
@@ -244,7 +246,7 @@ public class EMAlgorithm extends LearningAlgorithm {
             this.expandedNet = expandedNet;
         }
         
-        @Override public Map<Variable, TablePotential> call() {
+        @Override public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException {
             Map<Variable, TablePotential> jointProbabilities = new HashMap<>();
             EvidenceCase caseEvidence = new EvidenceCase();
             for (int j = 0; j < dataCase.length; ++j) {

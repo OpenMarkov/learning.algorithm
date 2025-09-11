@@ -11,6 +11,7 @@
 package org.openmarkov.learning.algorithm.em;
 
 import org.junit.jupiter.api.*;
+import org.openmarkov.core.exception.CannotNormalizePotentialException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
@@ -78,8 +79,8 @@ public class EMAlgorithmTests {
 		algorithm = new EMAlgorithm(probNet, caseDatabase, 0.0);
 
 	}
-
-	@Test public void test() {
+    
+    @Test public void test() throws CannotNormalizePotentialException {
 		ProbNet learnedNet = algorithm.parametricLearning();
 		Assertions.assertNotNull(learnedNet);
 		Assertions.assertEquals(4, learnedNet.getNumNodes());
