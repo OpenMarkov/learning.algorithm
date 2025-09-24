@@ -1,6 +1,9 @@
 package org.openmarkov.learning.algorithm.nbderived.snb.gui;
 
 import org.apache.poi.util.StringUtil;
+import org.jetbrains.annotations.Nullable;
+import org.openmarkov.core.exception.InvalidArgumentException;
+import org.openmarkov.core.exception.UnrecoverableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.learning.algorithm.nbderived.snb.SelectiveNBAlgorithm;
@@ -108,9 +111,11 @@ public class SelectiveNBParametersDialog extends AlgorithmParametersDialog {
         forwardCheckbox.setSelected(true);
 
         AcceptButton.setText(stringDatabase.getString("Learning.Ok"));
-        AcceptButton.addActionListener(new java.awt.event.ActionListener() {
-            @Override public void actionPerformed(ActionEvent evt) {
+        AcceptButton.addActionListener(evt -> {
+            try {
                 acceptButtonActionPerformed(evt);
+            } catch (InvalidArgumentException e) {
+                throw new UnrecoverableException(e);
             }
         });
 
@@ -160,27 +165,18 @@ public class SelectiveNBParametersDialog extends AlgorithmParametersDialog {
                         .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
         pack();
     }
-
-
-    private void acceptButtonActionPerformed(ActionEvent evt) {
-        List<String> errorMessages= new ArrayList<>();
-
+    
+    
+    private void acceptButtonActionPerformed(ActionEvent evt) throws InvalidArgumentException {
+        @Nullable Double alpha;
         try {
-            double alpha = Double.parseDouble(alphaText.getText());
-
-            if ((alpha < 0) || (alpha > 1)) {
-                errorMessages.add(stringDatabase.getString("Learning.SelectiveNaiveBayes.IncorrectParameter"));
-            }
+            alpha = Double.parseDouble(alphaText.getText());
         } catch (NumberFormatException e) {
-            errorMessages.add(stringDatabase.getString("Learning.SelectiveNaiveBayes.IncorrectParameter"));
+            alpha = null;
         }
-
-        if(!errorMessages.isEmpty()){
-            JOptionPane.showMessageDialog(null, StringUtil.join(LINE_SEPARATOR, errorMessages.toArray()),
-                    stringDatabase.getString("ErrorWindow.Title.Label"), JOptionPane.ERROR_MESSAGE);
-            return;
+        if (alpha == null || (alpha < 0) || (alpha > 1)) {
+            throw new InvalidArgumentException(alpha, "alpha", "must between 0 and 1");
         }
-
         alphaParameter = alphaText.getText();
         this.setVisible(false);
     }
