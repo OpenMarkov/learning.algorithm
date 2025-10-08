@@ -481,63 +481,116 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * Method to compute the first stage of the orientation. For each
-     * uncoupled meeting X - Y - Z if Y does not pertain to the separation
-     * set of X and Z, we should orient X -&gt; Y &lt;- Z.
+     * Detects and orients head-to-head (v-structure) patterns X->Y<-Z according to the PC algorithm rule:
+     * For every unconnected pair (X, Z) that share a common neighbor Y, if Y ∉ S(X, Z)
+     * (the separation set of X and Z), then orient X->Y<-Z.
      *
-     * @param onlyAllowedEdits
-     * @return LearningEditProposal
+     * This implementation correctly handles partially oriented graphs (e.g., A->B, B->E, C--E)
+     * by orienting only the remaining undirected edges and avoiding redundant re-orientations.
+     *
+     * Main design decisions:
+     *  - Iterate over Y and all its general neighbors (directed or undirected) using getNeighbors().
+     *  - Do NOT remove X from Y’s neighborhood list; this avoids missing valid triplets in mixed graphs.
+     *  - Add to the compound edit only the orientations that are still undirected (isSibling()).
+     *  - Skip triples where both candidate links are already directed.
+     *
+     * @param onlyAllowedEdits if true, only orientations allowed by structural constraints are considered
+     * @return a LearningEditProposal with the orientation(s) to apply, or null if none found
      */
     private LearningEditProposal orientHeadToHeadLinks(boolean onlyAllowedEdits) {
-        
-        List<Node> neighborhoodX, neighborhoodY;
+
         COrientLinksEdit compoundDirectLinkEdit;
-        OrientLinkEdit orientLinkEdit1, orientLinkEdit2;
         StringEditMotivation stringMotivation;
-        
-        for (Node nodeX : probNet.getNodes()) {
-            neighborhoodX = nodeX.getSiblings();
-            for (Node nodeY : neighborhoodX) {
-                neighborhoodY = nodeY.getSiblings();
-                neighborhoodY.remove(nodeX);
-                
-                for (Node nodeZ : neighborhoodY) {
-                    //Adjacent nodeX and nodeZ?
-                    if (!nodeX.getNeighbors().contains(nodeZ)) {
-                        // if Y is not included in the separation set of X and Z
-                    	List<Node> separationXZ = Optional.ofNullable(cache.get(new NodePair(nodeX, nodeZ)))
-                                .map(PCEditMotivation::getSeparationSet)
-                                .orElse(Collections.emptyList());
-                        if (separationXZ == null || !separationXZ.contains(nodeY)) {
-                            //Then orient X->;Y<-Z
-                            orientLinkEdit1 = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeY.getVariable(),
-                                                                 true);
-                            orientLinkEdit2 = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(),
-                                                                 true);
-                            compoundDirectLinkEdit = new COrientLinksEdit(probNet, new Vector<>());
-                            compoundDirectLinkEdit.addEdit(orientLinkEdit1);
-                            compoundDirectLinkEdit.addEdit(orientLinkEdit2);
-                            stringMotivation = new StringEditMotivation(
-                                    "Sep. set (" + nodeX.getName() + ", " + nodeZ.getName()
-                                            + ") does not contain variable: " + nodeY.getName());
-                            if (!alreadyConsidered(orientLinkEdit1, orientLinkEdit2) && !isBlocked(
-                                    new LearningEditProposal(compoundDirectLinkEdit, stringMotivation)) && (
-                                    !onlyAllowedEdits || (
-                                            isOrientationAllowed(orientLinkEdit1) && isOrientationAllowed(
-                                                    orientLinkEdit2)
-                                    )
-                            )) {
-                                lastCompoundOrientationEdits.add(compoundDirectLinkEdit);
-                                return new LearningEditProposal(compoundDirectLinkEdit, stringMotivation);
-                            }
+
+        // Iterate over every possible middle node Y in a potential X–Y–Z triple
+        for (Node nodeY : probNet.getNodes()) {
+
+            // Obtain all neighbors of Y (both directed and undirected)
+            List<Node> neighborsY = new ArrayList<>(nodeY.getNeighbors());
+            int n = neighborsY.size();
+
+            // For each unordered pair (X, Z) of Y's neighbors
+            for (int i = 0; i < n; i++) {
+                Node nodeX = neighborsY.get(i);
+                for (int j = i + 1; j < n; j++) {
+                    Node nodeZ = neighborsY.get(j);
+
+                    if (nodeX == nodeZ) {
+                        continue; // safety check
+                    }
+
+                    // Ensure X and Z are NOT adjacent (unshielded triple condition)
+                    if (nodeX.getNeighbors().contains(nodeZ)) {
+                        continue;
+                    }
+
+                    // Retrieve the separation set S(X, Z) from the cache (empty if not found)
+                    List<Node> separationXZ = Optional.ofNullable(cache.get(new NodePair(nodeX, nodeZ)))
+                            .map(PCEditMotivation::getSeparationSet)
+                            .orElse(Collections.emptyList());
+
+                    // If Y ∉ S(X, Z), we must orient edges towards Y (X->Y<-Z)
+                    if (!separationXZ.contains(nodeY)) {
+
+                        // Prepare orientation edits towards Y
+                        OrientLinkEdit orientXY = new OrientLinkEdit(probNet,
+                                nodeX.getVariable(), nodeY.getVariable(), true);
+                        OrientLinkEdit orientZY = new OrientLinkEdit(probNet,
+                                nodeZ.getVariable(), nodeY.getVariable(), true);
+
+                        // Check if each orientation is allowed (according to current constraints)
+                        boolean allowedXY = isOrientationAllowed(orientXY);
+                        boolean allowedZY = isOrientationAllowed(orientZY);
+
+                        // If both are forbidden under the constraint mode, skip this triple
+                        if (onlyAllowedEdits && !(allowedXY || allowedZY)) {
+                            continue;
+                        }
+
+                        // Collect only orientations that are still undirected (siblings)
+                        Vector<UndoableEdit> edits = new Vector<>();
+
+                        if (allowedXY && nodeX.isSibling(nodeY)) {
+                            // X–Y is undirected: orient X->Y
+                            edits.add(orientXY);
+                        }
+                        if (allowedZY && nodeZ.isSibling(nodeY)) {
+                            // Z–Y is undirected: orient Z->Y (critical in A->B, B->E, C--E)
+                            edits.add(orientZY);
+                        }
+
+                        // If both edges are already directed, skip this case
+                        if (edits.isEmpty()) {
+                            continue;
+                        }
+
+                        // Create a compound edit for all required orientations
+                        compoundDirectLinkEdit = new COrientLinksEdit(probNet, edits);
+
+                        // Explanation text for logging and traceability
+                        stringMotivation = new StringEditMotivation(
+                                "Sep. set (" + nodeX.getName() + ", " + nodeZ.getName() +
+                                        ") does not contain variable: " + nodeY.getName());
+
+                        LearningEditProposal proposal =
+                                new LearningEditProposal(compoundDirectLinkEdit, stringMotivation);
+
+                        // Avoid duplicates or blocked proposals
+                        boolean duplicate =
+                                (edits.size() == 2) && alreadyConsidered((OrientLinkEdit)edits.get(0), (OrientLinkEdit)edits.get(1));
+
+                        if (!duplicate && !isBlocked(proposal)) {
+                            lastCompoundOrientationEdits.add(compoundDirectLinkEdit);
+                            return proposal; // return the first applicable proposal
                         }
                     }
                 }
             }
         }
+
+        // No applicable orientation found
         return null;
-    }
-    
+    }   
     /**
      * Method to compute the final stage of the algorithm. The basic idea is
      * that no new head-to-head links are created and that the DAG condition is
