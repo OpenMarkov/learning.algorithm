@@ -3,6 +3,7 @@ package org.openmarkov.learning.algorithm.nbderived.kdb.gui;
 import org.apache.poi.util.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.openmarkov.core.exception.InvalidArgumentException;
+import org.openmarkov.core.exception.UnreacheableException;
 import org.openmarkov.core.exception.UnrecoverableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
@@ -187,17 +188,15 @@ public class KDBParametersDialog extends AlgorithmParametersDialog {
     }
     
     private Metric getMetricByName(String metricName) {
-        Metric metric = null;
         try {
-            metric = (Metric) Arrays.stream(metricManager.getMetricByName(metricName).getConstructors())
-                                    .iterator()
-                                    .next()
-                                    .newInstance();
+            return (Metric) Arrays.stream(metricManager.getMetricByName(metricName).getConstructors())
+                                  .iterator()
+                                  .next()
+                                  .newInstance();
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException e) {
-            e.printStackTrace();
+            throw new UnreacheableException(e);
         }
-        return metric;
     }
     
     public String getMetric() {

@@ -10,6 +10,7 @@ package org.openmarkov.learning.algorithm.em;
 import org.openmarkov.core.action.PNEdit;
 import org.openmarkov.core.exception.CannotNormalizePotentialException;
 import org.openmarkov.core.exception.IncompatibleEvidenceException;
+import org.openmarkov.core.exception.NonProjectablePotentialException;
 import org.openmarkov.core.exception.NotEvaluableNetworkException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.EvidenceCase;
@@ -65,7 +66,8 @@ public class EMAlgorithm extends LearningAlgorithm {
     /**
      * Parametric learning
      */
-    @Override public ProbNet parametricLearning() throws CannotNormalizePotentialException {
+    @Override
+    public ProbNet parametricLearning() throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork, NotEvaluableNetworkException.UnsatisfiedContraints {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
         
@@ -75,20 +77,12 @@ public class EMAlgorithm extends LearningAlgorithm {
         ProbNet expandedNet = adaptNetwork(probNet, potentials, iciSubpotentials);
         
         HashMap<Potential, TablePotential> expertKnowledge = new HashMap<Potential, TablePotential>();
-        
         for (TablePotential potential : potentials) {
             expertKnowledge.put(potential, new TablePotential(potential));
         }
         
-        HuginPropagation inferenceAlgorithm = null;
-        try {
-            inferenceAlgorithm = new HuginPropagation(expandedNet);
-            inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
-        } catch (NotEvaluableNetworkException.NotApplicableNetwork |
-                 NotEvaluableNetworkException.UnsatisfiedContraints e1) {
-            e1.printStackTrace();
-        }
-        
+        HuginPropagation inferenceAlgorithm = new HuginPropagation(expandedNet);
+        inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
         double lastLogLikelihood = Double.NEGATIVE_INFINITY;
         double currentLogLikelihood;
         
@@ -246,18 +240,15 @@ public class EMAlgorithm extends LearningAlgorithm {
             this.expandedNet = expandedNet;
         }
         
-        @Override public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException {
+        @Override
+        public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException, NonProjectablePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther {
             Map<Variable, TablePotential> jointProbabilities = new HashMap<>();
             EvidenceCase caseEvidence = new EvidenceCase();
             for (int j = 0; j < dataCase.length; ++j) {
                 Variable variable = variables.get(j);
-                try {
-                    String stateName = variable.getStateName(dataCase[j]);
-                    if (!stateName.equals("?")) {
-                        caseEvidence.addFinding(expandedNet, variable.getName(), stateName);
-                    }
-                } catch (IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther e) {
-                    e.printStackTrace();
+                String stateName = variable.getStateName(dataCase[j]);
+                if (!stateName.equals("?")) {
+                    caseEvidence.addFinding(expandedNet, variable.getName(), stateName);
                 }
             }
             inferenceAlgorithm.setPostResolutionEvidence(caseEvidence);

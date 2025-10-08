@@ -9,6 +9,7 @@ package org.openmarkov.learning.algorithm.hillclimbing.gui;
 
 import org.jetbrains.annotations.Nullable;
 import org.openmarkov.core.exception.InvalidArgumentException;
+import org.openmarkov.core.exception.UnreacheableException;
 import org.openmarkov.core.exception.UnrecoverableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
@@ -180,8 +181,8 @@ public class HillClimbingParametersDialog
     // End of variables declaration//GEN-END:variables
     
     @Override public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        Metric metricInstance = null;
         try {
+            Metric metricInstance = null;
             Constructor<?>[] constructors = metricManager.getMetricByName(metric).getConstructors();
             for (Constructor<?> constructor : constructors) {
                 Class<?>[] parameterTypes = constructor.getParameterTypes();
@@ -190,17 +191,17 @@ public class HillClimbingParametersDialog
                 else if (parameterTypes.length == 0)
                     metricInstance = (Metric) constructor.newInstance();
             }
+            return new HillClimbingAlgorithm(probNet, database, Double.parseDouble(alphaParameter), metricInstance);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+            throw new UnreacheableException(e);
         }
-        return new HillClimbingAlgorithm(probNet, database, Double.parseDouble(alphaParameter), metricInstance);
     }
     
     @Override public ArrayList<Object> getOptions() {
         ArrayList<Object> options = new ArrayList<>();
         options.add(Double.parseDouble(alphaParameter));
-        Metric metricInstance = null;
         try {
+            Metric metricInstance = null;
             Constructor<?>[] constructors = metricManager.getMetricByName(metric).getConstructors();
             for (Constructor<?> constructor : constructors) {
                 Class<?>[] parameterTypes = constructor.getParameterTypes();
@@ -209,10 +210,10 @@ public class HillClimbingParametersDialog
                 else if (parameterTypes.length == 0)
                     metricInstance = (Metric) constructor.newInstance();
             }
+            options.add(metricInstance);
+            return options;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
+            throw new UnreacheableException(e);
         }
-        options.add(metricInstance);
-        return options;
     }
 }

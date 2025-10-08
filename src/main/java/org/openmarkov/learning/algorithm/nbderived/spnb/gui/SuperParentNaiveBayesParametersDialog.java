@@ -3,6 +3,7 @@ package org.openmarkov.learning.algorithm.nbderived.spnb.gui;
 import org.apache.poi.util.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.openmarkov.core.exception.InvalidArgumentException;
+import org.openmarkov.core.exception.UnreacheableException;
 import org.openmarkov.core.exception.UnrecoverableException;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.ProbNet;
@@ -58,29 +59,35 @@ public class SuperParentNaiveBayesParametersDialog extends AlgorithmParametersDi
 
     @Override
     public LearningAlgorithm getInstance(ProbNet probNet, CaseDatabase database) {
-        Metric metricInstance = null;
         try {
-            metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors()).iterator().next().newInstance();
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            e.printStackTrace();
+            Metric metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors())
+                                                   .iterator()
+                                                   .next()
+                                                   .newInstance();
+            return new SuperParentNBAlgorithm(probNet, database, metricInstance,
+                                              Double.parseDouble(alphaParameter),
+                                              sameSPCheckbox.isSelected());
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
+                 InvocationTargetException e) {
+            throw new UnreacheableException(e);
         }
-        return new SuperParentNBAlgorithm(probNet, database, metricInstance,
-                Double.parseDouble(alphaParameter),
-                sameSPCheckbox.isSelected());
     }
     @Override
     public ArrayList<Object> getOptions(){
-        ArrayList<Object> options=new ArrayList<>();
-        Metric metricInstance = null;
         try {
-            metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors()).iterator().next().newInstance();
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            e.printStackTrace();
+            ArrayList<Object> options = new ArrayList<>();
+            Metric metricInstance = (Metric) Arrays.stream(metricManager.getMetricByName(metric).getConstructors())
+                                                   .iterator()
+                                                   .next()
+                                                   .newInstance();
+            options.add(metricInstance);
+            options.add(Double.parseDouble(alphaParameter));
+            options.add(sameSPCheckbox.isSelected());
+            return options;
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
+                 InvocationTargetException e) {
+            throw new UnreacheableException(e);
         }
-        options.add(metricInstance);
-        options.add(Double.parseDouble(alphaParameter));
-        options.add(sameSPCheckbox.isSelected());
-        return options;
     }
 
 

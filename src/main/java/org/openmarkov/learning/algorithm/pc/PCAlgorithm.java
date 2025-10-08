@@ -815,9 +815,6 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         );
     }
     
-    @Override public void undoableEditWillHappen(UndoableEditEvent event) {
-    }
-    
     @Override public void undoEditHappened(UndoableEditEvent event) {
         UndoableEdit edit = event.getEdit();
         Node nodeX, nodeY;
