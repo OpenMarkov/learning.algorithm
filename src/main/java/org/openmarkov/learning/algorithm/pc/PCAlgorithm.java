@@ -548,7 +548,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                         }
 
                         // Collect only orientations that are still undirected (siblings)
-                        Vector<UndoableEdit> edits = new Vector<>();
+                        Vector<OrientLinkEdit> edits = new Vector<>();
 
                         if (allowedXY && nodeX.isSibling(nodeY)) {
                             // X–Y is undirected: orient X->Y
