@@ -1,6 +1,6 @@
 package org.openmarkov.learning.algorithm.naivebayes;
 
-import org.openmarkov.core.action.PNEdit;
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;

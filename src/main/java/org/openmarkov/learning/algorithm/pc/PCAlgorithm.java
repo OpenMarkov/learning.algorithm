@@ -7,11 +7,17 @@
 
 package org.openmarkov.learning.algorithm.pc;
 
-import org.openmarkov.core.action.*;
+import org.openmarkov.core.action.core.COrientLinksEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Link;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
+import org.openmarkov.core.action.base.PNEdit;
+import org.openmarkov.core.action.base.PNUndoableEditListener;
+import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
+import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
+import org.openmarkov.core.action.base.linkEdits.OrientLinkEdit;
+import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
 import org.openmarkov.learning.algorithm.pc.independencetester.IndependenceTester;
 import org.openmarkov.learning.algorithm.pc.util.PCEditMotivation;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;

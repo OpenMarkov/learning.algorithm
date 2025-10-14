@@ -7,7 +7,7 @@
 
 package org.openmarkov.learning.algorithm.em;
 
-import org.openmarkov.core.action.PNEdit;
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.exception.CannotNormalizePotentialException;
 import org.openmarkov.core.exception.IncompatibleEvidenceException;
 import org.openmarkov.core.exception.NonProjectablePotentialException;

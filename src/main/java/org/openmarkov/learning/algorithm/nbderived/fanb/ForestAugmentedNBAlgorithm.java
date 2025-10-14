@@ -1,8 +1,8 @@
 package org.openmarkov.learning.algorithm.nbderived.fanb;
 
-import org.openmarkov.core.action.AddLinkEdit;
-import org.openmarkov.core.action.BaseLinkEdit;
-import org.openmarkov.core.action.PNEdit;
+import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
+import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
@@ -73,7 +73,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * that can be done to the network that is being learnt.
      *
      * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolated are returned
+     *                          that do not provoke a ConstraintViolatedException are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
      * @return {@code LearningEditProposal} with the best edit and its score.
@@ -102,7 +102,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * that can be done to the network that is being learnt.
      *
      * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolated are returned
+     *                          that do not provoke a ConstraintViolatedException are returned
      * @param onlyPositiveEdits If this parameter is true, only those
      *                          edits with a positive associated score are returned.
      * @return {@code LearningEditProposal} with the best edit and its score.
