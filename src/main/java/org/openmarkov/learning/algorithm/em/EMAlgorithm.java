@@ -8,10 +8,7 @@
 package org.openmarkov.learning.algorithm.em;
 
 import org.openmarkov.core.action.base.PNEdit;
-import org.openmarkov.core.exception.CannotNormalizePotentialException;
-import org.openmarkov.core.exception.IncompatibleEvidenceException;
-import org.openmarkov.core.exception.NonProjectablePotentialException;
-import org.openmarkov.core.exception.NotEvaluableNetworkException;
+import org.openmarkov.core.exception.*;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.EvidenceCase;
 import org.openmarkov.core.model.network.NodeType;
@@ -67,7 +64,7 @@ public class EMAlgorithm extends LearningAlgorithm {
      * Parametric learning
      */
     @Override
-    public ProbNet parametricLearning() throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork, NotEvaluableNetworkException.UnsatisfiedContraints {
+    public ProbNet parametricLearning() throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork, NotEvaluableNetworkException.UnsatisfiedContraints, ConstraintViolatedException {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
         

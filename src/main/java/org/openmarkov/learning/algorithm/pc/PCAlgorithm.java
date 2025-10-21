@@ -7,12 +7,13 @@
 
 package org.openmarkov.learning.algorithm.pc;
 
+import org.openmarkov.core.action.base.PNEdit;
+import org.openmarkov.core.action.base.PNUndoableEditEvent;
 import org.openmarkov.core.action.core.COrientLinksEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Link;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.PNUndoableEditListener;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
@@ -26,8 +27,6 @@ import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.StringEditMotivation;
 import org.openmarkov.learning.algorithm.pc.util.NodePair;
 
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.undo.UndoableEdit;
 import java.util.*;
 
 /**
@@ -108,7 +107,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         super(probNet, caseDatabase, alpha);
         this.independenceTester = independenceTester;
         this.significanceLevel = significanceLevel;
-        this.probNet.getPNESupport().addUndoableEditListener(this);
+        this.probNet.getPNESupport().addListener(this);
         
         cache = new HashMap<>();
         
@@ -554,7 +553,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                         }
 
                         // Collect only orientations that are still undirected (siblings)
-                        Vector<OrientLinkEdit> edits = new Vector<>();
+                        ArrayList<OrientLinkEdit> edits = new ArrayList<>();
 
                         if (allowedXY && nodeX.isSibling(nodeY)) {
                             // X–Y is undirected: orient X->Y
@@ -821,8 +820,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         );
     }
     
-    @Override public void undoEditHappened(UndoableEditEvent event) {
-        UndoableEdit edit = event.getEdit();
+    @Override public void undoEditHappened(PNUndoableEditEvent event) {
+        PNEdit edit = event.getEdit();
         Node nodeX, nodeY;
         
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
@@ -845,9 +844,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         resetHistory();
     }
     
-    @Override public void undoableEditHappened(UndoableEditEvent event) {
+    @Override public void undoableEditHappened(PNUndoableEditEvent event) {
         
-        UndoableEdit edit = event.getEdit();
+        PNEdit edit = event.getEdit();
         Node nodeX, nodeY;
         
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {

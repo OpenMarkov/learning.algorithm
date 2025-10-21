@@ -1,8 +1,8 @@
 package org.openmarkov.learning.algorithm.nbderived.common;
 
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Graph;
 import org.openmarkov.core.model.network.Node;
