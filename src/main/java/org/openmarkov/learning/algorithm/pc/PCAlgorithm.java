@@ -820,7 +820,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         );
     }
     
-    @Override public void undoEditHappened(PNUndoableEditEvent event) {
+    @Override public void afterUndoingEdit(PNUndoableEditEvent event) {
         PNEdit edit = event.getEdit();
         Node nodeX, nodeY;
         
@@ -844,7 +844,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         resetHistory();
     }
     
-    @Override public void undoableEditHappened(PNUndoableEditEvent event) {
+    @Override public void afterEditHappens(PNUndoableEditEvent event) {
         
         PNEdit edit = event.getEdit();
         Node nodeX, nodeY;
