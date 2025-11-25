@@ -113,8 +113,7 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
         if (!forward) {
             setRelationsForRootVariable();
         }
-        MaxNumParents maxNumParentsConstraint = new MaxNumParents();
-        maxNumParentsConstraint.setMaxNumParents(1);
+        MaxNumParents maxNumParentsConstraint = new MaxNumParents(1);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }

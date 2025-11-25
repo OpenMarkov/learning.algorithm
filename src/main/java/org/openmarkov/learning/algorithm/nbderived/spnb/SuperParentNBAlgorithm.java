@@ -132,8 +132,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         orphans = new LinkedList<Node>(getNonRootNodes());
         
         setRelationsForRootVariable();
-        MaxNumParents maxNumParentsConstraint = new MaxNumParents();
-        maxNumParentsConstraint.setMaxNumParents(2);
+        MaxNumParents maxNumParentsConstraint = new MaxNumParents(2);
         //this.probNet.addConstraint(new NoCycle(), true);
         this.probNet.addConstraint(maxNumParentsConstraint);
         this.probNet.removeConstraint(new DistinctLinks());
@@ -158,7 +157,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
             double addScore = metric.getScore(addLink);
             
             if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
-                    && (!onlyAllowedEdits || addLink.getNode1() == getRootNode() || isAllowed(addLink))
+                    && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
                     && (addScore >= bestPartialScore[0] || !onlyPositiveEdits)
             ) {
                 bestPartialScore[0] = addScore;
@@ -173,7 +172,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
                 double addScore = metric.getScore(addLink);
                 
                 if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
-                        && (!onlyAllowedEdits || addLink.getNode1() == getRootNode() || isAllowed(addLink))
+                        && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
                         && (addScore > bestPartialScore[0] || !onlyPositiveEdits)
                 ) {
                     bestEdit[0] = addLink;
@@ -183,10 +182,10 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         }
         if (this.sameSP) {
             getNonRootNodes().stream()
-                             .filter(n -> !n.getName().equals(bestEdit[0].getVariable2().getName()))
+                             .filter(n -> !n.getName().equals(bestEdit[0].getVariableTo().getName()))
                              .map(Node::getVariable)
                              .forEach(v -> {
-                                 probNet.addLink(bestEdit[0].getVariable2(), v, true);
+                                 probNet.addLink(bestEdit[0].getVariableTo(), v, true);
                              });
             bestEdit[0] = null;
         }
@@ -194,7 +193,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         if (bestEdit[0] != null) {
             bestEditProposal = new SuperParentNaiveBayesEditProposal(bestEdit[0], bestPartialScore[0]);
             markEditAsConsidered(bestEdit[0]);
-            orphans.remove(probNet.getNode(bestEdit[0].getVariable2()));
+            orphans.remove(probNet.getNode(bestEdit[0].getVariableTo()));
             currentAccuracy = bestPartialScore[0];
         }
         

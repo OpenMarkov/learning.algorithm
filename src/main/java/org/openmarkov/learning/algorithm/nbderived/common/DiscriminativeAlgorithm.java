@@ -93,7 +93,8 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
      * @return true if the link belongs to the maximum weight spanning tree
      */
     protected boolean withinMaxWeightSpanningTree(Variable v1, Variable v2){
-        return directedMaxWeightSpanningTree.stream().anyMatch(l -> (l.getVariable1()==v1 && l.getVariable2()==v2));
+        return directedMaxWeightSpanningTree.stream()
+                                            .anyMatch(l -> (l.getVariableFrom() == v1 && l.getVariableTo() == v2));
     }
 
 
@@ -106,11 +107,16 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
         while(!nodes.isEmpty()){
             Variable head = nodes.get(0);
             getEditsForVariable(maximumWeightSpanningTree, head).forEach(edit -> {
-                BaseLinkEdit directedEdit = new AddLinkEdit(probNet, head, edit.getVariable1()==head?edit.getVariable2():edit.getVariable1(), true);
-                if(redirectedTree.stream().noneMatch(t -> t.getVariable2().equals(directedEdit.getVariable1()) && t.getVariable1().equals(directedEdit.getVariable2())
-                        || t.getVariable1().equals(directedEdit.getVariable1()) && t.getVariable2().equals(directedEdit.getVariable2())
+                BaseLinkEdit directedEdit = new AddLinkEdit(probNet, head, edit.getVariableFrom() == head ? edit.getVariableTo() : edit.getVariableFrom(), true);
+                if (redirectedTree.stream()
+                                  .noneMatch(t -> t.getVariableTo()
+                                                   .equals(directedEdit.getVariableFrom()) && t.getVariableFrom()
+                                                                                               .equals(directedEdit.getVariableTo())
+                                          || t.getVariableFrom()
+                                              .equals(directedEdit.getVariableFrom()) && t.getVariableTo()
+                                                                                          .equals(directedEdit.getVariableTo())
                 )){
-                    nodes.add(directedEdit.getVariable2());
+                    nodes.add(directedEdit.getVariableTo());
                     redirectedTree.add(directedEdit);
                 }
             });
@@ -120,7 +126,9 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
     }
     
     private static List<BaseLinkEdit> getEditsForVariable(List<BaseLinkEdit> list, Variable v) {
-        return  list.stream().filter(edit -> edit.getVariable1()==v || edit.getVariable2()==v).collect(Collectors.toList());
+        return list.stream()
+                   .filter(edit -> edit.getVariableFrom() == v || edit.getVariableTo() == v)
+                   .collect(Collectors.toList());
     }
 
 

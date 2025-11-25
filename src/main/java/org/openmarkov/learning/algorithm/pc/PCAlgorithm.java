@@ -448,7 +448,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return RemoveLinkEdit with the inverse direction
      */
     public RemoveLinkEdit inverseEdit(RemoveLinkEdit edit) {
-        return new RemoveLinkEdit(probNet, edit.getVariable2(), edit.getVariable1(), false);
+        return new RemoveLinkEdit(probNet, edit.getVariableTo(), edit.getVariableFrom(), false);
     }
     
     /**
@@ -457,7 +457,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return true if the edit has already been considered, false otherwise
      */
     public boolean alreadyConsidered(BaseLinkEdit edit, Set<PNEdit> consideredEdits) {
-        BaseLinkEdit inverseEdit = new RemoveLinkEdit(probNet, edit.getVariable2(), edit.getVariable1(),
+        BaseLinkEdit inverseEdit = new RemoveLinkEdit(probNet, edit.getVariableTo(), edit.getVariableFrom(),
                                                       edit.isDirected());
         return consideredEdits.contains(edit) || consideredEdits.contains(inverseEdit);
     }
@@ -813,8 +813,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @return true if the orientation is allowed, false otherwise
      */
     private boolean isOrientationAllowed(OrientLinkEdit orientLinkEdit) {
-        Node sourceNode = probNet.getNode(orientLinkEdit.getVariable1());
-        Node destinationNode = probNet.getNode(orientLinkEdit.getVariable2());
+        Node sourceNode = probNet.getNode(orientLinkEdit.getVariableFrom());
+        Node destinationNode = probNet.getNode(orientLinkEdit.getVariableTo());
         return (
                 !probNet.existsPath(destinationNode, sourceNode, true) && isAllowed(orientLinkEdit)
         );
@@ -826,14 +826,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             phase = Phase.INITIAL_PHASE;
-            nodeX = probNet.getNode(removeLinkEdit.getVariable1());
-            nodeY = probNet.getNode(removeLinkEdit.getVariable2());
+            nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
+            nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
             List<Node> separationSet = cache.get(new NodePair(nodeX, nodeY)).getSeparationSet();
             double linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
             cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(linkScore, separationSet));
         } else if (edit instanceof AddLinkEdit addLinkEdit) {
-            nodeX = probNet.getNode(addLinkEdit.getVariable1());
-            nodeY = probNet.getNode(addLinkEdit.getVariable2());
+            nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
+            nodeY = probNet.getNode(addLinkEdit.getVariableTo());
             probNet.removeLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
         } else if (edit instanceof COrientLinksEdit) {
@@ -850,8 +850,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         Node nodeX, nodeY;
         
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
-            nodeX = probNet.getNode(removeLinkEdit.getVariable1());
-            nodeY = probNet.getNode(removeLinkEdit.getVariable2());
+            nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
+            nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
 
             PCEditMotivation cachedScore = cache.get(new NodePair(nodeX, nodeY));
             List<Node> separationSet = cachedScore != null ? cachedScore.getSeparationSet() : new ArrayList<>();
@@ -871,8 +871,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         }
         //An AddLinkEdit can only be done by the user. Just undirect the link
         if (edit instanceof AddLinkEdit addLinkEdit) {
-            nodeX = probNet.getNode(addLinkEdit.getVariable1());
-            nodeY = probNet.getNode(addLinkEdit.getVariable2());
+            nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
+            nodeY = probNet.getNode(addLinkEdit.getVariableTo());
             probNet.removeLink(nodeX, nodeY, true);
             probNet.addLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
@@ -889,14 +889,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         Node nodeX, nodeY, nodeZ;
         LearningEditMotivation motivation = null;
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
-            nodeX = probNet.getNode(removeLinkEdit.getVariable1());
-            nodeY = probNet.getNode(removeLinkEdit.getVariable2());
+            nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
+            nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
             motivation = cache.get(new NodePair(nodeX, nodeY));
             
         } else if (edit instanceof COrientLinksEdit compoundDirectLinkEdit) {
-            nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariable1());
-            nodeZ = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariable2());
-            nodeY = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)).getVariable1());
+            nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariableFrom());
+            nodeZ = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariableTo());
+            nodeY = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)).getVariableFrom());
             motivation = new StringEditMotivation(
                     "Sep. set (" + nodeX.getName() + ", " + nodeY.getName() + ") does not contain variable: "
                             + nodeZ.getName());

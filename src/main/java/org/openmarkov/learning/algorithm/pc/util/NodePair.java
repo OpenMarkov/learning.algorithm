@@ -3,7 +3,7 @@ package org.openmarkov.learning.algorithm.pc.util;
 import org.openmarkov.core.model.network.Node;
 
 /**
- * Immutable representation of an unordered pair of nodes.
+ * ExteriorImmutable representation of an unordered pair of nodes.
  * <p>
  * Ensures that (X,Y) and (Y,X) are treated as equal by enforcing
  * a canonical order based on {@link System#identityHashCode(Object)}.

@@ -91,7 +91,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
-                (((BaseLinkEdit) edit).getVariable1().getName() == getRootNode().getName() ?
+                (((BaseLinkEdit) edit).getVariableFrom().getName() == getRootNode().getName() ?
                         unconditionedMetric : metric).getScore(edit)
         );
     }
@@ -124,8 +124,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         }
         avgCMI = avgCMI == null ? computeAveragedConditionalMutualInformation() : avgCMI;
         setRelationsForRootVariable();
-        MaxNumParents maxNumParentsConstraint = new MaxNumParents();
-        maxNumParentsConstraint.setMaxNumParents(kDependence + 1);
+        MaxNumParents maxNumParentsConstraint = new MaxNumParents(kDependence + 1);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
@@ -164,7 +163,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         
         if (subtreeRoot == null) {
             bestEdit[0] = getBestRootForSubtree();
-            subtreeRoot = probNet.getNode(bestEdit[0].getVariable2());
+            subtreeRoot = probNet.getNode(bestEdit[0].getVariableTo());
             directedMaxWeightSpanningTree = redirectMaximumWeightSpanningTree(subtreeRoot.getVariable());
             bestPartialScore[0] = unconditionedMetric.getScore(bestEdit[0]);
         } else {

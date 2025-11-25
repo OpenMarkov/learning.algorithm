@@ -103,8 +103,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
             directedMaxWeightSpanningTree = redirectMaximumWeightSpanningTree(getRandomVariable());
         }
         setRelationsForRootVariable();
-        MaxNumParents maxNumParentsConstraint = new MaxNumParents();
-        maxNumParentsConstraint.setMaxNumParents(2);
+        MaxNumParents maxNumParentsConstraint = new MaxNumParents(2);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }

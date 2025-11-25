@@ -93,7 +93,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
-                (((BaseLinkEdit) edit).getVariable1()
+                (((BaseLinkEdit) edit).getVariableFrom()
                                       .getName() == getRootNode().getName() ? unconditionedMetric : metric).getScore(edit)
         );
     }
@@ -122,8 +122,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
         if (unconditionedMetric instanceof MutualInformationMetric miMetric) {
             miMetric.setClassVariable(this.classVariableName);
         }
-        MaxNumParents maxNumParentsConstraint = new MaxNumParents();
-        maxNumParentsConstraint.setMaxNumParents(kDependence + 1);
+        MaxNumParents maxNumParentsConstraint = new MaxNumParents(kDependence + 1);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
@@ -169,7 +168,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
             bestEdit[0] = getNewXMaxFeatureEdit();
             if (bestEdit[0] != null) {
                 bestPartialScore[0] = unconditionedMetric.getScore(bestEdit[0]);
-                domainFeatures.add(bestEdit[0].getVariable2().getName());
+                domainFeatures.add(bestEdit[0].getVariableTo().getName());
             }
             
         } else {
