@@ -637,8 +637,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     private LearningEditProposal tryOrientFromDirectedLinks(boolean onlyAllowedEdits) {
         for (Link<Node> link : probNet.getLinks()) {
             if (link.isDirected()) {
-                Node nodeX = link.getNode1();
-                Node nodeZ = link.getNode2();
+                Node nodeX = link.getFrom();
+                Node nodeZ = link.getTo();
                 for (Node nodeY : nodeZ.getSiblings()) {
                     OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(), true);
                     LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
@@ -671,8 +671,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     private LearningEditProposal tryOrientFromNonOrientedLinks(boolean onlyAllowedEdits) {
         for (Link<Node> link : probNet.getLinks()) {
             if (!link.isDirected()) {
-                Node nodeX = link.getNode1();
-                Node nodeZ = link.getNode2();
+                Node nodeX = link.getFrom();
+                Node nodeZ = link.getTo();
                 
                 LearningEditProposal proposal = tryOrientIfPathExists(nodeX, nodeZ, onlyAllowedEdits);
                 if (proposal != null) return proposal;
@@ -776,8 +776,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     private LearningEditProposal tryOrientUnorientedWithoutPath(boolean onlyAllowedEdits) {
         for (Link<Node> link : probNet.getLinks()) {
             if (!link.isDirected()) {
-                Node nodeX = link.getNode1();
-                Node nodeZ = link.getNode2();
+                Node nodeX = link.getFrom();
+                Node nodeZ = link.getTo();
                 
                 OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeZ.getVariable(), true);
                 LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));

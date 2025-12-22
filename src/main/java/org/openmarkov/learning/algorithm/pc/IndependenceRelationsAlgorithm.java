@@ -58,7 +58,7 @@ public abstract class IndependenceRelationsAlgorithm extends LearningAlgorithm {
 		else if (modelNetUse != null && (modelNetUse.isLinkRemovalAllowed() || modelNetUse.isLinkInversionAllowed())) {
 			for (Link<Node> link : probNet.getLinks()) {
 				probNet.removeLink(link);
-				probNet.addLink(link.getNode1(), link.getNode2(), false);
+                probNet.addLink(link.getFrom(), link.getTo(), false);
 			}
 		} else {
 			for (Link<Node> link : probNet.getLinks()) {
