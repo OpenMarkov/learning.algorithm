@@ -48,3 +48,9 @@ Thumbs.db
 *.mov
 *.wmv
 
+
+.project
+.classpath
+.settings/
+bin/
+target/
