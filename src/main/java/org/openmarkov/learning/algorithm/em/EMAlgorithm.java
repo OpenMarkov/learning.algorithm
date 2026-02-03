@@ -34,66 +34,118 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * Implements Expectation Maximization parametric learning algorithm
- * Maybe Structural EM will be implemented in the future
+ * Implements the Expectation-Maximization (EM) parametric learning algorithm
+ * for Bayesian networks with latent (unobserved) variables.
+ * <p>
+ * <b>Current Status:</b> This algorithm is currently DISABLED and under
+ * development.
+ * Only parametric learning is implemented; structural EM may be added in the
+ * future.
+ * <p>
+ * <b>Algorithm Overview:</b>
+ * The EM algorithm iteratively performs two steps:
+ * <ul>
+ * <li><b>E-step (Expectation):</b> Calculate expected sufficient statistics
+ * given current parameters and observed data</li>
+ * <li><b>M-step (Maximization):</b> Update parameters to maximize the
+ * expected log-likelihood</li>
+ * </ul>
+ * <p>
+ * <b>Known Issues:</b>
+ * <ul>
+ * <li>The alpha parameter is not currently utilized (see constructor TODO)</li>
+ * <li>Structural learning is not implemented</li>
+ * <li>The algorithm loop is disabled (line 146: {@code while (false)})</li>
+ * </ul>
  *
  * @author Iñigo
+ * @version 0.3.0-SNAPSHOT
+ * @since OpenMarkov 0.3.0
+ * @see <a href=
+ *      "https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">EM
+ *      Algorithm on Wikipedia</a>
  */
-//TODO: This learning algorith is disabled
+// TODO: This learning algorithm is disabled - needs completion before
+// production use
 @LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
-    
+
     private static final double EPSILON = 0.00001;
-    
+
+    /**
+     * Constructs an EM learning algorithm instance.
+     *
+     * @param probNet      The probabilistic network to learn parameters for
+     * @param caseDatabase The database of cases (with possible missing values)
+     * @param alpha        Dirichlet prior strength parameter (currently unused)
+     */
     public EMAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Double alpha) {
         super(probNet, caseDatabase, alpha);
-        // TODO do something with alpha parameter, e.g. initialize non-latent variables
+        // TODO: Implement alpha parameter usage for:
+        // - Initializing non-latent variable parameters
+        // - Regularization to prevent overfitting
+        // - Incorporating expert knowledge (Bayesian prior)
     }
-    
-    @Override public void init(ModelNetUse modelNetUse) {
+
+    @Override
+    public void init(ModelNetUse modelNetUse) {
         // Nothing here
-        
+
     }
-    
-    @Override public LearningEditMotivation getMotivation(PNEdit edit) {
-        // This does not make sense for the time being, as structural learning is not implemented for EM
+
+    /**
+     * Returns the motivation for a given edit.
+     * <p>
+     * <b>Note:</b> This method is not applicable for EM algorithm as structural
+     * learning is not currently implemented. EM only performs parametric learning.
+     *
+     * @param edit The proposed network edit
+     * @return null (structural learning not supported)
+     */
+    @Override
+    public LearningEditMotivation getMotivation(PNEdit edit) {
+        // This does not make sense for the time being, as structural learning is not
+        // implemented for EM
         return null;
     }
-    
+
     /**
      * Parametric learning
      */
     @Override
-    public ProbNet parametricLearning() throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork, NotEvaluableNetworkException.UnsatisfiedContraints, ConstraintViolatedException {
+    public ProbNet parametricLearning()
+            throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther,
+            NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork,
+            NotEvaluableNetworkException.UnsatisfiedContraints, ConstraintViolatedException {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
-        
-        //Init sigma
+
+        // Init sigma
         List<TablePotential> potentials = new ArrayList<>();
         Map<ICIPotential, List<TablePotential>> iciSubpotentials = new HashMap<>();
         ProbNet expandedNet = adaptNetwork(probNet, potentials, iciSubpotentials);
-        
+
         HashMap<Potential, TablePotential> expertKnowledge = new HashMap<Potential, TablePotential>();
         for (TablePotential potential : potentials) {
             expertKnowledge.put(potential, new TablePotential(potential));
         }
-        
+
         HuginPropagation inferenceAlgorithm = new HuginPropagation(expandedNet);
         inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
         double lastLogLikelihood = Double.NEGATIVE_INFINITY;
         double currentLogLikelihood;
-        
+
         int iterations = 0;
         do {
             HashMap<Potential, TablePotential> expectedCountsMap = new HashMap<Potential, TablePotential>();
-            
-            //E-step
-            //For each case in the database
+
+            // E-step
+            // For each case in the database
             int notNull = 0;
             // List<Double> accruedWeights = new ArrayList<> (cases.length);
             for (int i = 0; i < cases.length; ++i) {
-                Map<Variable, TablePotential> jointProbabilities =
-                        new JointProbabilityCalculator(variables, cases[i], inferenceAlgorithm, expandedNet).call();
+                Map<Variable, TablePotential> jointProbabilities = new JointProbabilityCalculator(variables, cases[i],
+                        inferenceAlgorithm, expandedNet).call();
                 notNull++;
                 System.out.println(notNull + " from " + i);
                 for (Potential potential : potentials) {
@@ -107,7 +159,7 @@ public class EMAlgorithm extends LearningAlgorithm {
                 // accruedWeights.add (inferenceAlgorithm.getAccruedWeight ());
             }
             // System.out.println(accruedWeights.toString ());
-            //M-step
+            // M-step
             for (TablePotential potential : potentials) {
                 Variable childVariable = potential.getVariables().get(0);
                 int childNumStates = childVariable.getNumStates();
@@ -115,20 +167,19 @@ public class EMAlgorithm extends LearningAlgorithm {
                 double[] p_ijk = expertKnowledge.get(potential).values;
                 double[] expectedCounts = expectedCountsMap.get(potential).values;
                 double[] expectedCountsParents = new double[expectedCounts.length / childNumStates];
-                
+
                 // Marginalize child variable: M[x,u]-> M[u]
                 for (int i = 0; i < expectedCounts.length; ++i) {
                     expectedCountsParents[i / childNumStates] += expectedCounts[i];
                 }
-                
+
                 // Calculate new theta (as seen on madsen2003)
                 for (int i = 0; i < theta.length; ++i) {
-                    theta[i] = (expectedCounts[i] + alpha * p_ijk[i]) / (
-                            expectedCountsParents[i / childNumStates] + alpha
-                    );
+                    theta[i] = (expectedCounts[i] + alpha * p_ijk[i])
+                            / (expectedCountsParents[i / childNumStates] + alpha);
                 }
             }
-            
+
             // Calculate new log likelihood
             currentLogLikelihood = 0.0;
             for (TablePotential potential : potentials) {
@@ -139,30 +190,30 @@ public class EMAlgorithm extends LearningAlgorithm {
                         currentLogLikelihood += expectedCounts.values[i] * Math.log(theta[i]);
                     }
                 }
-                
+
             }
             ++iterations;
-            
-        } while (false);//iterations  < 100 && (currentLogLikelihood - lastLogLikelihood) > EPSILON);
-        
+
+        } while (false);// iterations < 100 && (currentLogLikelihood - lastLogLikelihood) > EPSILON);
+
         for (ICIPotential iciPotential : iciSubpotentials.keySet()) {
             iciPotential.setNoisyPotentials(iciSubpotentials.get(iciPotential));
         }
-        
+
         return probNet;
     }
-    
+
     private static void sum(TablePotential tablePotential, TablePotential jointProbability) {
         double[] tablePotentialValues = tablePotential.values;
         double[] jointProbabilityValues = jointProbability.values;
-        
+
         for (int i = 0; i < tablePotentialValues.length; ++i) {
             tablePotentialValues[i] += jointProbabilityValues[i];
         }
     }
-    
+
     private static ProbNet adaptNetwork(ProbNet probNet, List<TablePotential> potentials,
-                                        Map<ICIPotential, List<TablePotential>> iciSubpotentials) {
+            Map<ICIPotential, List<TablePotential>> iciSubpotentials) {
         ProbNet expandedNet = probNet.copy();
         for (Potential potential : expandedNet.getPotentials()) {
             if (potential.getPotentialRole() == PotentialRole.CONDITIONAL_PROBABILITY) {
@@ -176,7 +227,7 @@ public class EMAlgorithm extends LearningAlgorithm {
                         List<TablePotential> noisyPotentials = iciPotential.getNoisyPotentials();
                         iciSubpotentials.put(iciPotential, noisyPotentials);
                         potentials.addAll(noisyPotentials);
-                        
+
                         Variable conditioningVariable = potential.getVariable(0);
                         for (TablePotential noisyPotential : noisyPotentials) {
                             Variable zVariable = noisyPotential.getVariable(0);
@@ -204,23 +255,47 @@ public class EMAlgorithm extends LearningAlgorithm {
         }
         return expandedNet;
     }
-    
-    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        // TODO Auto-generated method stub
+
+    /**
+     * Returns the best structural edit proposal.
+     * <p>
+     * <b>Not Implemented:</b> EM algorithm currently only supports parametric
+     * learning.
+     * Structural EM would require implementing this method to propose structure
+     * changes.
+     *
+     * @param onlyAllowedEdits  If true, only return edits that satisfy constraints
+     * @param onlyPositiveEdits If true, only return edits with positive score
+     * @return null (structural learning not implemented)
+     */
+    @Override
+    public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        // TODO: Implement structural EM if needed
         return null;
     }
-    
-    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        // TODO Auto-generated method stub
+
+    /**
+     * Returns the next best structural edit proposal.
+     * <p>
+     * <b>Not Implemented:</b> EM algorithm currently only supports parametric
+     * learning.
+     *
+     * @param onlyAllowedEdits  If true, only return edits that satisfy constraints
+     * @param onlyPositiveEdits If true, only return edits with positive score
+     * @return null (structural learning not implemented)
+     */
+    @Override
+    public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        // TODO: Implement structural EM if needed
         return null;
     }
-    
+
     private static class JointProbabilityCalculator implements Callable<Map<Variable, TablePotential>> {
         private List<Variable> variables;
         private int[] dataCase;
         private HuginPropagation inferenceAlgorithm;
         private ProbNet expandedNet;
-        
+
         /**
          * Constructor for JointProbabilityCalculator.
          *
@@ -230,15 +305,16 @@ public class EMAlgorithm extends LearningAlgorithm {
          * @param expandedNet
          */
         public JointProbabilityCalculator(List<Variable> variables, int[] dataCase, HuginPropagation inferenceAlgorithm,
-                                          ProbNet expandedNet) {
+                ProbNet expandedNet) {
             this.variables = variables;
             this.dataCase = dataCase;
             this.inferenceAlgorithm = inferenceAlgorithm;
             this.expandedNet = expandedNet;
         }
-        
+
         @Override
-        public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException, NonProjectablePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther {
+        public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException,
+                NonProjectablePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther {
             Map<Variable, TablePotential> jointProbabilities = new HashMap<>();
             EvidenceCase caseEvidence = new EvidenceCase();
             for (int j = 0; j < dataCase.length; ++j) {
@@ -253,12 +329,12 @@ public class EMAlgorithm extends LearningAlgorithm {
                 if (potential.getPotentialRole() == PotentialRole.CONDITIONAL_PROBABILITY) {
                     Variable conditioningVariable = potential.getVariable(0);
                     jointProbabilities.put(conditioningVariable,
-                                           inferenceAlgorithm.getJointProbability(potential.getVariables()));
+                            inferenceAlgorithm.getJointProbability(potential.getVariables()));
                 }
             }
             return jointProbabilities;
         }
-        
+
     }
-    
+
 }

@@ -45,21 +45,50 @@ public class StatisticalUtilities {
      * This function is useful in hypothesis testing, such as goodness-of-fit or
      * independence tests.
      *
-     * @param statistic        The chi-square test statistic obtained from a
-     *                         hypothesis test.
-     * @param degreesOfFreedom The degrees of freedom of the chi-square distribution
-     *                         (must be greater than 0).
+     * @param statistic The chi-square test statistic obtained from a
+     *                  Computes the cumulative distribution function (CDF) of the
+     *                  chi-square distribution.
+     *                  <p>
+     *                  This method calculates P(X ≤ statistic) where X follows a
+     *                  chi-square distribution
+     *                  with the specified degrees of freedom. This is essential for
+     *                  independence testing
+     *                  in the PC Algorithm, where chi-square tests determine
+     *                  whether two variables are
+     *                  conditionally independent given a separation set.
+     *                  <p>
+     *                  <b>Mathematical Background:</b>
+     *                  The chi-square CDF is computed using the incomplete gamma
+     *                  function:
+     * 
+     *                  <pre>
+     * P(X ≤ x) = P(df/2, x/2) = γ(df/2, x/2) / Γ(df/2)
+     *                  </pre>
+     * 
+     *                  where γ is the lower incomplete gamma function and Γ is the
+     *                  gamma function.
+     *                  <p>
+     *                  <b>Usage in PC Algorithm:</b>
+     *                  The p-value from this test determines whether to remove a
+     *                  link between nodes.
+     *                  A high p-value (e.g., > 0.05) indicates independence,
+     *                  suggesting the link should
+     *                  be removed.
+     *
+     * @param statistic The chi-square test statistic value (must be ≥ 0)
+     * @param df        Degrees of freedom (must be > 0)
      * @return The cumulative probability P(X ≤ statistic)
-     * @throws IllegalArgumentException If `degreesOfFreedom` is less than or equal
-     *                                  to 0
-     * @see #gammp(double, double) For the computation of the regularized incomplete
-     *      gamma function.
+     * @throws IllegalArgumentException if statistic < 0 or df ≤ 0
+     * @see #gammp(double, double)
      */
-    static public double chiSquare(double statistic, double degreesOfFreedom) {
-        if (degreesOfFreedom <= 0) {
+    static public double chiSquare(double statistic, double df) {
+        if (statistic < 0) {
+            throw new IllegalArgumentException("Statistic must be greater than or equal to 0.");
+        }
+        if (df <= 0) {
             throw new IllegalArgumentException("Degrees of freedom of chiSquare must be greater than 0.");
         }
-        return (gammp(degreesOfFreedom / 2.0, statistic / 2.0));
+        return (gammp(df / 2.0, statistic / 2.0));
     }
 
     /**

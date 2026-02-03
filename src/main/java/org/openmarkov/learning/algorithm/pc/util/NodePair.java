@@ -5,8 +5,29 @@ import org.openmarkov.core.model.network.Node;
 /**
  * Immutable representation of an unordered pair of nodes.
  * <p>
- * Ensures that (X,Y) and (Y,X) are treated as equal by enforcing
- * a canonical order based on node names for deterministic behavior.
+ * This class ensures that (X,Y) and (Y,X) are treated as equal by enforcing
+ * a canonical order based on node names. This is critical for the PC
+ * Algorithm's
+ * cache mechanism, which stores independence test results keyed by node pairs.
+ * <p>
+ * <b>Canonical Ordering:</b> Nodes are ordered lexicographically by name to
+ * ensure
+ * deterministic behavior across different JVM executions. This prevents issues
+ * where {@code System.identityHashCode()} might produce different orderings.
+ * <p>
+ * <b>Usage Example:</b>
+ * 
+ * <pre>{@code
+ * NodePair pair1 = new NodePair(nodeA, nodeB);
+ * NodePair pair2 = new NodePair(nodeB, nodeA);
+ * assert pair1.equals(pair2); // true - order doesn't matter
+ * assert pair1.hashCode() == pair2.hashCode(); // true - consistent hashing
+ * }</pre>
+ *
+ * @author OpenMarkov Development Team
+ * @version 1.1
+ * @since OpenMarkov 0.3.0
+ * @see org.openmarkov.learning.algorithm.pc.PCAlgorithm
  */
 public record NodePair(Node first, Node second) {
 

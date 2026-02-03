@@ -60,12 +60,20 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	// Constructor
 
 	/**
-	 * @param probNet
-	 * @param caseDatabase
-	 * @param alpha        double parameter alpha
-	 *                     gives the best operation in each iteration of the algorithm.
-	 * @param metric       for the learning.
-	 **/
+	 * Constructs a Hill Climbing learning algorithm instance.
+	 * <p>
+	 * The Hill Climbing algorithm is a greedy local search algorithm that
+	 * iteratively
+	 * selects the edit (add link, remove link, or invert link) with the highest
+	 * score
+	 * improvement until no further improvements are possible.
+	 *
+	 * @param probNet      The probabilistic network to learn
+	 * @param caseDatabase The database of cases for learning
+	 * @param alpha        Significance level parameter (usage depends on metric)
+	 * @param metric       The scoring metric used to evaluate edits (e.g., BIC,
+	 *                     AIC, K2)
+	 */
 	public HillClimbingAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Double alpha, Metric metric) {
 		super(probNet, caseDatabase, metric, alpha);
 		this.probNet = probNet;
@@ -75,7 +83,18 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 		resetHistory();
 	}
 
-	@Override public LearningEditMotivation getMotivation(PNEdit edit) {
+	/**
+	 * Returns the motivation (score) for a given edit.
+	 * <p>
+	 * <b>Note:</b> There is an open question about whether the score should come
+	 * from the metric (current implementation) or from inference. The metric-based
+	 * approach is computationally efficient but may not capture all dependencies.
+	 *
+	 * @param edit The proposed network edit
+	 * @return A ScoreEditMotivation containing the metric score for this edit
+	 */
+	@Override
+	public LearningEditMotivation getMotivation(PNEdit edit) {
 		// TODO: Review. Perhaps score should come from inference?
 		return new ScoreEditMotivation(metric.getScore(edit));
 	}
@@ -85,12 +104,14 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * that can be done to the network that is being learnt.
 	 *
 	 * @param onlyAllowedEdits  If this parameter is true, only those edits
-	 *                          that do not provoke a ConstraintViolatedException are returned
+	 *                          that do not provoke a ConstraintViolatedException
+	 *                          are returned
 	 * @param onlyPositiveEdits If this parameter is true, only those
 	 *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
+	 * @return {@code LearningEditProposal} with the best edit and its score.
 	 */
-	@Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+	@Override
+	public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
 		resetHistory();
 		return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
 	}
@@ -100,12 +121,14 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * that can be done to the network that is being learnt.
 	 *
 	 * @param onlyAllowedEdits  If this parameter is true, only those edits
-	 *                          that do not provoke a ConstraintViolatedException are returned
+	 *                          that do not provoke a ConstraintViolatedException
+	 *                          are returned
 	 * @param onlyPositiveEdits If this parameter is true, only those
 	 *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
+	 * @return {@code LearningEditProposal} with the best edit and its score.
 	 */
-	@Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+	@Override
+	public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
 		LearningEditProposal bestEdit = getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
 		while (bestEdit != null && isBlocked(bestEdit.getEdit())) {
 			bestEdit = getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
@@ -138,7 +161,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * Method to obtain the edit with the highest associated score.
 	 *
 	 * @param learnedNet net to learn.
-     * @return {@code PNEdit} edit with the highest associated score.
+	 * @return {@code PNEdit} edit with the highest associated score.
 	 */
 	private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
 			boolean onlyPositiveEdits) {
@@ -173,9 +196,8 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 						 * whether this edit has not been already considered
 						 */
 						if ((removeScore > bestPartialScore) && !isEditAlreadyConsidered(removeLinkEdit)) {
-							if ((!onlyAllowedEdits || isAllowed(removeLinkEdit)) && (
-									!onlyPositiveEdits || removeScore > 0
-							) && !isBlocked(removeLinkEdit)) {
+							if ((!onlyAllowedEdits || isAllowed(removeLinkEdit))
+									&& (!onlyPositiveEdits || removeScore > 0) && !isBlocked(removeLinkEdit)) {
 								bestEdit = removeLinkEdit;
 								bestPartialScore = removeScore;
 							}
@@ -188,9 +210,8 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 						 * whether this edit has not been already considered
 						 */
 						if ((invertScore > bestPartialScore) && !isEditAlreadyConsidered(invertLinkEdit)) {
-							if ((!onlyAllowedEdits || isAllowed(invertLinkEdit)) && (
-									!onlyPositiveEdits || invertScore > 0
-							) && !isBlocked(invertLinkEdit)) {
+							if ((!onlyAllowedEdits || isAllowed(invertLinkEdit))
+									&& (!onlyPositiveEdits || invertScore > 0) && !isBlocked(invertLinkEdit)) {
 								bestEdit = invertLinkEdit;
 								bestPartialScore = invertScore;
 							}
