@@ -78,7 +78,7 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
                                      (oldValue, newValue) -> oldValue, LinkedHashMap::new))
               .keySet().forEach(k-> {
                             List<Node> nodes = new ArrayList(k);
-                            if(!auxTree.existsPath(nodes.get(0), nodes.get(1), false)){
+                            if(!auxTree.existsPath(nodes.get(0), nodes.get(1), false, Collections.emptyList())){
                                 auxTree.addLink(nodes.get(0), nodes.get(1), false);
                                 maximumWeightSpanningTree.add(new AddLinkEdit(probNet, nodes.get(0).getVariable(), nodes.get(1).getVariable(), false));
                             }

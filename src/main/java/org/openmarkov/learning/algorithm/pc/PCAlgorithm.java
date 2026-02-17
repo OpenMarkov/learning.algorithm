@@ -704,7 +704,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         // 2. This orientation hasn't already been proposed
         // 3. It is not blocked by any constraint
         // 4. If restrictions apply, it must be allowed
-        if (probNet.existsPath(from, to, true)
+        if (probNet.existsPath(from, to, true, Collections.emptyList())
                 && !alreadyConsidered(edit, lastOrientationEdits)
                 && !isBlocked(proposal)
                 && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
@@ -787,7 +787,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                 // 2. Not already considered
                 // 3. Not blocked
                 // 4. Allowed if filtering enabled
-                if (!probNet.existsPath(nodeZ, nodeX, true) && !alreadyConsidered(edit, lastOrientationEdits)
+                if (!probNet.existsPath(nodeZ, nodeX, true, Collections.emptyList()) && !alreadyConsidered(edit, lastOrientationEdits)
                         && !isBlocked(proposal) && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
                     lastOrientationEdits.add(edit);
                     return proposal;
@@ -816,7 +816,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         Node sourceNode = probNet.getNode(orientLinkEdit.getVariableFrom());
         Node destinationNode = probNet.getNode(orientLinkEdit.getVariableTo());
         return (
-                !probNet.existsPath(destinationNode, sourceNode, true) && isAllowed(orientLinkEdit)
+                !probNet.existsPath(destinationNode, sourceNode, true, Collections.emptyList()) && isAllowed(orientLinkEdit)
         );
     }
     
