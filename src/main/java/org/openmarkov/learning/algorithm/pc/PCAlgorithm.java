@@ -7,14 +7,14 @@
 
 package org.openmarkov.learning.algorithm.pc;
 
+import org.jetbrains.annotations.UnknownNullability;
 import org.openmarkov.core.action.base.PNEdit;
-import org.openmarkov.core.action.base.PNUndoableEditEvent;
+import org.openmarkov.core.action.base.PNEditListener;
 import org.openmarkov.core.action.core.COrientLinksEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Link;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.core.action.base.PNUndoableEditListener;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.OrientLinkEdit;
@@ -42,7 +42,7 @@ import java.util.*;
  */
 @LearningAlgorithmType(name = "PC", discriminative = false, supportsUnobservedVariables = false)
 public class PCAlgorithm extends IndependenceRelationsAlgorithm
-        implements PNUndoableEditListener {
+        implements PNEditListener {
     
     // Constants
     private static final int ALREADY_DONE = -1;
@@ -820,20 +820,17 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         );
     }
     
-    @Override public void afterUndoingEdit(PNUndoableEditEvent event) {
-        PNEdit edit = event.getEdit();
-        Node nodeX, nodeY;
-        
+    @Override public void afterUndoingEdit(PNEdit edit) {
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             phase = Phase.INITIAL_PHASE;
-            nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
-            nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
+            Node nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
+            Node nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
             List<Node> separationSet = cache.get(new NodePair(nodeX, nodeY)).getSeparationSet();
             double linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
             cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(linkScore, separationSet));
         } else if (edit instanceof AddLinkEdit addLinkEdit) {
-            nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
-            nodeY = probNet.getNode(addLinkEdit.getVariableTo());
+            Node nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
+            Node nodeY = probNet.getNode(addLinkEdit.getVariableTo());
             probNet.removeLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
         } else if (edit instanceof COrientLinksEdit) {
@@ -844,14 +841,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         resetHistory();
     }
     
-    @Override public void afterEditHappens(PNUndoableEditEvent event) {
-        
-        PNEdit edit = event.getEdit();
-        Node nodeX, nodeY;
-        
+    @Override public void afterEditExecutes(@UnknownNullability PNEdit edit) {
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
-            nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
-            nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
+            Node nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
+            Node nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
 
             PCEditMotivation cachedScore = cache.get(new NodePair(nodeX, nodeY));
             List<Node> separationSet = cachedScore != null ? cachedScore.getSeparationSet() : new ArrayList<>();
@@ -871,8 +864,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         }
         //An AddLinkEdit can only be done by the user. Just undirect the link
         if (edit instanceof AddLinkEdit addLinkEdit) {
-            nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
-            nodeY = probNet.getNode(addLinkEdit.getVariableTo());
+            Node nodeX = probNet.getNode(addLinkEdit.getVariableFrom());
+            Node nodeY = probNet.getNode(addLinkEdit.getVariableTo());
             probNet.removeLink(nodeX, nodeY, true);
             probNet.addLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
