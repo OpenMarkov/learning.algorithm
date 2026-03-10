@@ -232,20 +232,30 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         }
         
     }
-    
+
     /**
-     * Transition to next phase when no more edits are possible
+     * Transitions the algorithm to the next phase when no more edits are available
+     * in the current one.
      *
-     * @param onlyAllowedEdits
-     * @return
+     * @param onlyAllowedEdits if true, only structurally allowed edits are considered
+     * @return the first proposal available in the next phase, or {@code null} if none exists
      */
     private LearningEditProposal transitionToNextPhase(boolean onlyAllowedEdits) {
-        if (lastRemovedEdits.isEmpty()) {
-            phase = Phase.HEAD_TO_HEAD_ORIENTATION;
-            return getOrientationEdit(onlyAllowedEdits);
-        }
-        phase = Phase.INITIAL_PHASE;
-        return null;
+        return switch (phase) {
+            case INITIAL_PHASE -> {
+                phase = Phase.HEAD_TO_HEAD_ORIENTATION;
+                yield getOrientationEdit(onlyAllowedEdits);
+            }
+            case HEAD_TO_HEAD_ORIENTATION -> {
+                phase = Phase.REMAINING_LINKS_ORIENTATION;
+                yield orientRemainingLinks(onlyAllowedEdits);
+            }
+            case REMAINING_LINKS_ORIENTATION -> {
+                phase = Phase.ORIENTATION_FINISHED;
+                yield null;
+            }
+            case ORIENTATION_FINISHED -> null;
+        };
     }
     
     /**

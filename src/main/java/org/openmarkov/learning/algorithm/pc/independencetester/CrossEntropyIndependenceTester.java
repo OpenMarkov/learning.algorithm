@@ -74,7 +74,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         if (degreesOfFreedom <= 0)
             degreesOfFreedom = 1;
         
-        return StatisticalUtilities.chiSquare(chiS, degreesOfFreedom); // Return the p-value
+        return StatisticalUtilities.chiSquarePValue(chiS, degreesOfFreedom); // Return the p-value
     }
     
     /**
