@@ -143,7 +143,7 @@ public class PCAlgorithmTest {
         org.openmarkov.learning.algorithm.pc.util.NodePair pair = new org.openmarkov.learning.algorithm.pc.util.NodePair(
                 nodeA, nodeC);
         pc.cache.put(pair,
-                new org.openmarkov.learning.algorithm.pc.util.PCEditMotivation(0.5, java.util.Collections.emptyList()));
+                new PCEditMotivation(0.5, java.util.Collections.emptyList()));
 
         // We force phase to HEAD_TO_HEAD_ORIENTATION via reflection or by exhausting
         // previous phase?

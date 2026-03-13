@@ -16,7 +16,6 @@ import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
-import org.openmarkov.learning.algorithm.hillclimbing.util.HillClimbingEditProposal;
 import org.openmarkov.learning.algorithm.scoreAndSearch.ScoreAndSearchAlgorithm;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;

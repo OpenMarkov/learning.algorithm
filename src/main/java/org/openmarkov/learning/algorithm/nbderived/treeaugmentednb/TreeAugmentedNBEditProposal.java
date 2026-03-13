@@ -1,12 +1,12 @@
-package org.openmarkov.learning.algorithm.nbderived.kdb.util;
+package org.openmarkov.learning.algorithm.nbderived.treeaugmentednb;
 
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 
-public class KDBEditProposal extends LearningEditProposal{
+public class TreeAugmentedNBEditProposal extends LearningEditProposal{
 
-    public KDBEditProposal(PNEdit edit, double score) {
+    public TreeAugmentedNBEditProposal(PNEdit edit, double score) {
             super(edit, new ScoreEditMotivation(score));
         }
 

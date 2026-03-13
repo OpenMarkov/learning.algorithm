@@ -1,4 +1,4 @@
-package org.openmarkov.learning.algorithm.nbderived.spnb.util;
+package org.openmarkov.learning.algorithm.nbderived.spnb;
 
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.learning.core.util.LearningEditProposal;

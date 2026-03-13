@@ -4,7 +4,7 @@
  * this code is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OF ANY KIND.
  */
-package org.openmarkov.learning.algorithm.hillclimbing.util;
+package org.openmarkov.learning.algorithm.hillclimbing;
 
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.learning.core.util.LearningEditProposal;

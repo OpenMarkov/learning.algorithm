@@ -4,25 +4,23 @@ open module org.openmarkov.learning.algorithm {
     requires org.apache.poi.poi;
 
     requires transitive org.openmarkov.core;
-    requires org.openmarkov.gui;
-    requires org.openmarkov.io;
     requires org.openmarkov.inference;
     requires transitive org.openmarkov.learning.core;
-    requires org.openmarkov.learning.gui;
     requires org.openmarkov.learning.metric;
     requires org.jetbrains.annotations;
     
-    exports org.openmarkov.learning.algorithm.scoreAndSearch;
     
-    exports org.openmarkov.learning.algorithm.pc;
+    exports org.openmarkov.learning.algorithm.em;
     exports org.openmarkov.learning.algorithm.hillclimbing;
     exports org.openmarkov.learning.algorithm.naivebayes;
-    exports org.openmarkov.learning.algorithm.em.gui;
-    exports org.openmarkov.learning.algorithm.hillclimbing.gui;
-    exports org.openmarkov.learning.algorithm.nbderived.snb.gui;
-    exports org.openmarkov.learning.algorithm.nbderived.spnb.gui;
-    exports org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.gui;
-    exports org.openmarkov.learning.algorithm.pc.gui;
+    exports org.openmarkov.learning.algorithm.nbderived.common;
+    exports org.openmarkov.learning.algorithm.nbderived.fanb;
+    exports org.openmarkov.learning.algorithm.nbderived.kdb;
+    exports org.openmarkov.learning.algorithm.nbderived.snb;
+    exports org.openmarkov.learning.algorithm.nbderived.spnb;
+    exports org.openmarkov.learning.algorithm.nbderived.treeaugmentednb;
+    exports org.openmarkov.learning.algorithm.pc;
     exports org.openmarkov.learning.algorithm.pc.independencetester;
-
+    exports org.openmarkov.learning.algorithm.scoreAndSearch;
+    
 }

@@ -20,7 +20,6 @@ import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.OrientLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
 import org.openmarkov.learning.algorithm.pc.independencetester.IndependenceTester;
-import org.openmarkov.learning.algorithm.pc.util.PCEditMotivation;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;

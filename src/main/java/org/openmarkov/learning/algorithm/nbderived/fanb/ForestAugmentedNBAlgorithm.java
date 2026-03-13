@@ -15,7 +15,6 @@ import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
-import org.openmarkov.learning.algorithm.nbderived.fanb.util.ForestAugmentedNBEditProposal;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
 import java.util.ArrayList;

@@ -16,7 +16,6 @@ import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
-import org.openmarkov.learning.algorithm.nbderived.spnb.util.SuperParentNaiveBayesEditProposal;
 
 import java.util.ArrayList;
 import java.util.Collection;
