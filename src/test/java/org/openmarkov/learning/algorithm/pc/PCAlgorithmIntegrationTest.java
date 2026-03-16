@@ -642,6 +642,169 @@ public class PCAlgorithmIntegrationTest {
         assertTrue(counts.get("orientations") >= 1, "At least 1 orientation expected");
     }
 
+    // -------------------------------------------------------------------------
+    // HeadToHead2 end-to-end test
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that the PC algorithm recovers the skeleton of the HeadToHead2 network
+     * and correctly identifies the v-structure at C from 5000 cases of data.
+     *
+     * <p>The reference network (HeadToHead2.pgmx) has five variables and the following
+     * directed links:
+     * <pre>
+     *   A → C ← B       (v-structure / collider at C)
+     *       B → E
+     *   C → F ← E       (v-structure / collider at F)
+     * </pre>
+     *
+     * <p><b>Skeleton (reliably recovered):</b> All five edges are present — A–C, B–C,
+     * B–E, C–F, E–F — and none of the five absent pairs (A–B, A–E, A–F, B–F, C–E)
+     * have a link.
+     *
+     * <p><b>V-structure at C (reliably recovered):</b> A and B are marginally
+     * independent (empty separation set), so C is always identified as a collider:
+     * A→C←B.
+     *
+     * <p><b>Note on the v-structure at F:</b> With 5000 cases the chi-square test
+     * for {@code B ⊥ F | {E}} exceeds the significance threshold, so the algorithm
+     * records sep(B,F) = {E}. Because C ∉ {E}, a spurious v-structure is detected at C
+     * for the pair (B,F), which causes C–F to be oriented as F→C instead of C→F.
+     * For this reason the test does not assert the orientation of C–F; it only checks
+     * that C–F exists in some form.
+     *
+     * @throws Exception if any test setup or algorithm execution step fails.
+     */
+    @Test
+    @DisplayName("HeadToHead2: correct skeleton and v-structure A→C←B recovered from 5000 cases")
+    void testHeadToHead2_skeletonAndColliderAtC() throws Exception {
+        List<Variable> variables = new ArrayList<>();
+        CaseDatabase db = loadCsvDatabase("network/HeadToHead2.csv", variables);
+        ProbNet probNet = buildCompleteUndirectedGraph(variables);
+
+        PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+
+        runAlgorithmToCompletion(pc);
+
+        // Resolve nodes by variable name to be independent of CSV column order.
+        Node nodeA = probNet.getNode("A");
+        Node nodeB = probNet.getNode("B");
+        Node nodeC = probNet.getNode("C");
+        Node nodeE = probNet.getNode("E");
+        Node nodeF = probNet.getNode("F");
+
+        // --- Non-adjacent pairs must have no link in any form ---
+        assertAbsent(probNet, nodeA, nodeB, "A–B");
+        assertAbsent(probNet, nodeA, nodeE, "A–E");
+        assertAbsent(probNet, nodeA, nodeF, "A–F");
+        assertAbsent(probNet, nodeB, nodeF, "B–F");
+        assertAbsent(probNet, nodeC, nodeE, "C–E");
+
+        // --- Adjacent pairs from the reference skeleton must all be present ---
+        boolean acExists = probNet.getLink(nodeA, nodeC, false) != null
+                || probNet.getLink(nodeA, nodeC, true) != null
+                || probNet.getLink(nodeC, nodeA, true) != null;
+        assertTrue(acExists, "Edge A–C must be present");
+
+        boolean bcExists = probNet.getLink(nodeB, nodeC, false) != null
+                || probNet.getLink(nodeB, nodeC, true) != null
+                || probNet.getLink(nodeC, nodeB, true) != null;
+        assertTrue(bcExists, "Edge B–C must be present");
+
+        boolean beExists = probNet.getLink(nodeB, nodeE, false) != null
+                || probNet.getLink(nodeB, nodeE, true) != null
+                || probNet.getLink(nodeE, nodeB, true) != null;
+        assertTrue(beExists, "Edge B–E must be present");
+
+        boolean cfExists = probNet.getLink(nodeC, nodeF, false) != null
+                || probNet.getLink(nodeC, nodeF, true) != null
+                || probNet.getLink(nodeF, nodeC, true) != null;
+        assertTrue(cfExists, "Edge C–F must be present");
+
+        boolean efExists = probNet.getLink(nodeE, nodeF, false) != null
+                || probNet.getLink(nodeE, nodeF, true) != null
+                || probNet.getLink(nodeF, nodeE, true) != null;
+        assertTrue(efExists, "Edge E–F must be present");
+
+        // --- V-structure at C: A→C and B→C must be directed toward C ---
+        // A and B are marginally independent (empty separation set), so this
+        // v-structure is always correctly identified.
+        assertNotNull(probNet.getLink(nodeA, nodeC, true),
+                "Directed A→C must exist (v-structure at C)");
+        assertNotNull(probNet.getLink(nodeB, nodeC, true),
+                "Directed B→C must exist (v-structure at C)");
+    }
+
+
+    /**
+     * Verifies that the PC algorithm fully recovers the structure of HeadToHead2
+     * from 10000 cases of data.
+     *
+     * <p>With 10000 cases the chi-square test correctly rejects {@code B⊥F|{E}},
+     * so no spurious v-structure is created and both colliders are properly oriented:
+     * <pre>
+     *   A → C ← B       (v-structure at C)
+     *       B → E
+     *   C → F ← E       (v-structure at F)
+     * </pre>
+     *
+     * <p>The orientation of B–E may be B→E, E→B, or undirected, because no PC
+     * orientation rule forces a direction on that edge after both v-structures are
+     * resolved.
+     *
+     * @throws Exception if any test setup or algorithm execution step fails.
+     */
+    @Test
+    @DisplayName("HeadToHead2 (10k): full structure recovered — skeleton, A→C←B and C→F←E")
+    void testHeadToHead2_10k_fullStructureRecovered() throws Exception {
+        List<Variable> variables = new ArrayList<>();
+        CaseDatabase db = loadCsvDatabase("network/HeadToHead2-10k.csv", variables);
+        ProbNet probNet = buildCompleteUndirectedGraph(variables);
+
+        PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+
+        runAlgorithmToCompletion(pc);
+
+        Node nodeA = probNet.getNode("A");
+        Node nodeB = probNet.getNode("B");
+        Node nodeC = probNet.getNode("C");
+        Node nodeE = probNet.getNode("E");
+        Node nodeF = probNet.getNode("F");
+
+        // --- Non-adjacent pairs must be absent ---
+        assertAbsent(probNet, nodeA, nodeB, "A–B");
+        assertAbsent(probNet, nodeA, nodeE, "A–E");
+        assertAbsent(probNet, nodeA, nodeF, "A–F");
+        assertAbsent(probNet, nodeB, nodeF, "B–F");
+        assertAbsent(probNet, nodeC, nodeE, "C–E");
+
+        // --- V-structure at C ---
+        assertNotNull(probNet.getLink(nodeA, nodeC, true), "Directed A→C must exist");
+        assertNotNull(probNet.getLink(nodeB, nodeC, true), "Directed B→C must exist");
+
+        // --- V-structure at F ---
+        assertNotNull(probNet.getLink(nodeC, nodeF, true), "Directed C→F must exist");
+        assertNotNull(probNet.getLink(nodeE, nodeF, true), "Directed E→F must exist");
+
+        // --- B–E must be present in some form ---
+        boolean beExists = probNet.getLink(nodeB, nodeE, false) != null
+                || probNet.getLink(nodeB, nodeE, true) != null
+                || probNet.getLink(nodeE, nodeB, true) != null;
+        assertTrue(beExists, "Edge B–E must be present");
+    }
+
+    /**
+     * Asserts that there is no link between {@code n1} and {@code n2} in any form
+     * (undirected, n1→n2, or n2→n1).
+     */
+    private static void assertAbsent(ProbNet net, Node n1, Node n2, String label) {
+        assertNull(net.getLink(n1, n2, false), "Undirected " + label + " should not exist");
+        assertNull(net.getLink(n1, n2, true),  "Directed " + label + " should not exist");
+        assertNull(net.getLink(n2, n1, true),  "Directed " + label + " (reversed) should not exist");
+    }
+
     @Test
     @DisplayName("GUI peeking — Chain A→B→C: skeleton and orientation still correct")
     void testGuiPeeking_chain_skeletonAndOrientationCorrect() throws Exception {
