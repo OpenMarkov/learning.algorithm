@@ -929,6 +929,10 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         return motivation;
     }
     
+    @Override public int getPhase() {
+        return phase.ordinal();
+    }
+
     @Override public boolean isLastPhase() {
         return (phase.ordinal() >= Phase.REMAINING_LINKS_ORIENTATION.ordinal());
     }
