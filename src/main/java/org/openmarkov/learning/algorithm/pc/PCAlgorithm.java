@@ -23,6 +23,7 @@ import org.openmarkov.learning.algorithm.pc.independencetester.IndependenceTeste
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
+import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.StringEditMotivation;
 import org.openmarkov.learning.algorithm.pc.util.NodePair;
 
@@ -113,6 +114,19 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         this.phase = Phase.INITIAL_PHASE;
     }
     
+    /**
+     * Initializes the algorithm. Resets phase and cache so that a fresh run
+     * (e.g. via the "Finish" button in the interactive dialog) is not affected
+     * by phase pollution caused by the table-population peeking calls.
+     */
+    @Override
+    public void init(ModelNetUse modelNetUse) {
+        super.init(modelNetUse);
+        phase = Phase.INITIAL_PHASE;
+        cache.clear();
+        resetHistory();
+    }
+
     /**
      * Method that returns the best edit in each step of the algorithm or null
      * if there are no more edits to consider.
@@ -223,7 +237,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                     
                     // Evaluate separation sets if not already cached or needs recalculation
                     if (motivation == null || (motivation.getScore() != ALREADY_DONE
-                            && motivation.getSeparationSet().size() > adjacencySize)) {
+                            && motivation.getSeparationSet().size() < adjacencySize)) {
                         evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
                     }
                 }
@@ -869,7 +883,13 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                     cache.remove(pair);
                 }
             }
-            
+
+            // Reset phase: getNextEdit() called for table population may have
+            // advanced the phase beyond INITIAL_PHASE without executing any edit.
+            // A RemoveLinkEdit always belongs to INITIAL_PHASE, so we must
+            // restore the phase here to ensure HEAD_TO_HEAD_ORIENTATION (collider
+            // detection) is not skipped on the next getBestEdit() call.
+            phase = Phase.INITIAL_PHASE;
         }
         //An AddLinkEdit can only be done by the user. Just undirect the link
         if (edit instanceof AddLinkEdit addLinkEdit) {
