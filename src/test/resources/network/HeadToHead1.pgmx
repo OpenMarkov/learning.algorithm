@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ProbModelXML formatVersion="1.0.0">
+  <ProbNet type="BayesianNetwork">
+    <DecisionCriteria>
+      <Criterion name="---" unit="---" />
+    </DecisionCriteria>
+    <Variables>
+      <Variable name="A" type="finiteStates" role="chance">
+        <Coordinates x="675" y="142" />
+        <States>
+          <State name="low" />
+          <State name="medium" />
+          <State name="high" />
+        </States>
+      </Variable>
+      <Variable name="B" type="finiteStates" role="chance">
+        <Coordinates x="862" y="148" />
+        <States>
+          <State name="low" />
+          <State name="medium" />
+          <State name="high" />
+        </States>
+      </Variable>
+      <Variable name="C" type="finiteStates" role="chance">
+        <Coordinates x="764" y="263" />
+        <States>
+          <State name="low" />
+          <State name="medium" />
+          <State name="high" />
+        </States>
+      </Variable>
+    </Variables>
+    <Links>
+      <Link directed="true">
+        <Variable name="A" />
+        <Variable name="C" />
+      </Link>
+      <Link directed="true">
+        <Variable name="B" />
+        <Variable name="C" />
+      </Link>
+    </Links>
+    <Potentials>
+      <Potential type="Table">
+        <Variables>
+          <Variable name="A" />
+        </Variables>
+        <Values>0.3 0.5 0.2</Values>
+      </Potential>
+      <Potential type="Table">
+        <Variables>
+          <Variable name="B" />
+        </Variables>
+        <Values>0.5 0.1 0.4</Values>
+      </Potential>
+      <Potential type="Table">
+        <Variables>
+          <Variable name="C" />
+          <Variable name="A" />
+          <Variable name="B" />
+        </Variables>
+        <Values>0.7 0.2 0.1 0.4 0.1 0.5 0.1 0.1 0.8 0.5 0.3 0.2 0.1 0.2 0.7 0.1 0.0 0.9 0.2 0.4 0.4 0.0 0.1 0.9 0.0 0.0 1.0</Values>
+      </Potential>
+    </Potentials>
+  </ProbNet>
+  <InferenceOptions>
+    <MulticriteriaOptions>
+      <SelectedAnalysisType>UNICRITERION</SelectedAnalysisType>
+      <Unicriterion>
+        <Scales>
+          <Scale Criterion="---" Value="1.0" />
+        </Scales>
+      </Unicriterion>
+      <CostEffectiveness>
+        <Scales>
+          <Scale Criterion="---" Value="1.0" />
+        </Scales>
+        <CE_Criteria>
+          <CE_Criterion Criterion="---" Value="Cost" />
+        </CE_Criteria>
+      </CostEffectiveness>
+    </MulticriteriaOptions>
+  </InferenceOptions>
+</ProbModelXML>
