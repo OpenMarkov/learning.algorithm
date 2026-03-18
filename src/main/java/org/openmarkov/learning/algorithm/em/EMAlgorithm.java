@@ -116,7 +116,7 @@ public class EMAlgorithm extends LearningAlgorithm {
     public ProbNet parametricLearning()
             throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther,
             NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork,
-            NotEvaluableNetworkException.UnsatisfiedContraints, ConstraintViolatedException {
+            NotEvaluableNetworkException.UnsatisfiedConstraints, ConstraintViolatedException {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
 
