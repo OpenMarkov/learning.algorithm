@@ -113,10 +113,7 @@ public class EMAlgorithm extends LearningAlgorithm {
      * Parametric learning
      */
     @Override
-    public ProbNet parametricLearning()
-            throws CannotNormalizePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther,
-            NonProjectablePotentialException, NotEvaluableNetworkException.NotApplicableNetwork,
-            NotEvaluableNetworkException.UnsatisfiedConstraints, ConstraintViolatedException {
+    public ProbNet parametricLearning() {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
 
@@ -130,7 +127,12 @@ public class EMAlgorithm extends LearningAlgorithm {
             expertKnowledge.put(potential, new TablePotential(potential));
         }
 
-        HuginPropagation inferenceAlgorithm = new HuginPropagation(expandedNet);
+        HuginPropagation inferenceAlgorithm;
+        try {
+            inferenceAlgorithm = new HuginPropagation(expandedNet);
+        } catch (ConstraintViolatedException e) {
+            throw new UnreachableException("EM: expanded network violates constraints", e);
+        }
         inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
         double lastLogLikelihood = Double.NEGATIVE_INFINITY;
         double currentLogLikelihood;
@@ -144,8 +146,13 @@ public class EMAlgorithm extends LearningAlgorithm {
             int notNull = 0;
             // List<Double> accruedWeights = new ArrayList<> (cases.length);
             for (int i = 0; i < cases.length; ++i) {
-                Map<Variable, TablePotential> jointProbabilities = new JointProbabilityCalculator(variables, cases[i],
-                        inferenceAlgorithm, expandedNet).call();
+                Map<Variable, TablePotential> jointProbabilities;
+                try {
+                    jointProbabilities = new JointProbabilityCalculator(variables, cases[i],
+                            inferenceAlgorithm, expandedNet).call();
+                } catch (IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther e) {
+                    throw new UnreachableException("EM: incompatible evidence in case " + i, e);
+                }
                 notNull++;
                 System.out.println(notNull + " from " + i);
                 for (Potential potential : potentials) {
@@ -313,8 +320,7 @@ public class EMAlgorithm extends LearningAlgorithm {
         }
 
         @Override
-        public Map<Variable, TablePotential> call() throws CannotNormalizePotentialException,
-                NonProjectablePotentialException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther {
+        public Map<Variable, TablePotential> call() throws IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther {
             Map<Variable, TablePotential> jointProbabilities = new HashMap<>();
             EvidenceCase caseEvidence = new EvidenceCase();
             for (int j = 0; j < dataCase.length; ++j) {
