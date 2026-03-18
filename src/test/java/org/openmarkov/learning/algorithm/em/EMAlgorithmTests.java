@@ -5,9 +5,6 @@
  * WITHOUT WARRANTIES OF ANY KIND.
  */
 
-/**
- *
- */
 package org.openmarkov.learning.algorithm.em;
 
 import org.junit.jupiter.api.*;
