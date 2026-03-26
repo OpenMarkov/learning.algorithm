@@ -37,14 +37,15 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
      * @return the score obtained in the independence test.
      */
     @Override
-    public double test(@NotNull CaseDatabase caseDatabase, @NotNull Node nodeX, @NotNull Node nodeY, @NotNull List<Node> adjacencySubset) {
+    public double test(@NotNull CaseDatabase caseDatabase, @NotNull Node nodeX, @NotNull Node nodeY,
+                       @NotNull List<Node> adjacencySubset) {
         long numStatesAdjacency = 1;
         double chiS;
         
         // nodesYZ = {Y, Z1, Z2, ..., Zn}
         // nodesZ  = {Z1, Z2, ..., Zn}
-        List<Node> nodesYZ = new ArrayList<Node>();
-        List<Node> nodesZ = new ArrayList<Node>();
+        List<Node> nodesYZ = new ArrayList<>();
+        List<Node> nodesZ = new ArrayList<>();
         nodesYZ.add(nodeY);
         for (Node adjacent : adjacencySubset) {
             nodesYZ.add(adjacent);
@@ -122,7 +123,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         int numStates = nodeX.getVariable().getNumStates();
         
         // Construct the list of variables: [X, Z1, Z2, ..., Zn]
-        List<Node> nodeAndAdjacency = new ArrayList<Node>();
+        List<Node> nodeAndAdjacency = new ArrayList<>();
         nodeAndAdjacency.add(nodeX);
         nodeAndAdjacency.addAll(adjacencySubset);
         
@@ -177,7 +178,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
             index++;
         }
         
-        TablePotential absoluteFreqPotential = new TablePotential(new ArrayList<Variable>(variables),
+        TablePotential absoluteFreqPotential = new TablePotential(new ArrayList<>(variables),
                                                                   PotentialRole.CONDITIONAL_PROBABILITY);
         double[] absoluteFreqs = absoluteFreqPotential.getValues();
         int[] offsets = absoluteFreqPotential.getOffsets();
