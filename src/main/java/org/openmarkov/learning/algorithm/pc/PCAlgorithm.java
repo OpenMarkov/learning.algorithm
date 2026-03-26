@@ -649,171 +649,151 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         return null;
     }   
     /**
-     * Method to compute the final stage of the algorithm. The basic idea is
-     * that no new head-to-head links are created and that the DAG condition is
-     * preserved.
-     *
+     * Orients remaining undirected links using Meek's orientation rules (R1, R2, R3)
+     * followed by a fallback for truly undetermined edges.
+     * <p>
+     * Meek (1995) proves that these rules, applied to closure, produce the unique CPDAG
+     * (completed partially directed acyclic graph) representing the Markov equivalence
+     * class of the true DAG.
      */
     private LearningEditProposal orientRemainingLinks(boolean onlyAllowedEdits) {
-        
-        // First pass: Try to orient links based on existing directed links (X → Z)
-        LearningEditProposal editProposal = tryOrientFromDirectedLinks(onlyAllowedEdits);
-        if (editProposal != null) 
-        	return editProposal;
-        
-        // Second pass: Try to orient links based on existing paths (X—Z with path X→Z or Z→X)
-        editProposal = tryOrientFromNonOrientedLinks(onlyAllowedEdits);
-        if (editProposal != null) 
-        	return editProposal;
-        
-        // Third pass: Try to orient non-directed links where no path exists in either direction
-        editProposal = tryOrientUnorientedWithoutPath(onlyAllowedEdits);
-        if (editProposal != null) 
-        	return editProposal;
-        
-        // No valid orientation found; mark phase as finished if no edits were proposed
+        // R1: A→B—C, A⊥C  →  B→C   (avoid new unshielded collider A→B←C)
+        LearningEditProposal p = meekR1(onlyAllowedEdits);
+        if (p != null) return p;
+
+        // R2: A→B→C, A—C  →  A→C   (avoid directed cycle A→B→C→A)
+        p = meekR2(onlyAllowedEdits);
+        if (p != null) return p;
+
+        // R3: D—A, D—B, D—C, B→A, C→A, B⊥C  →  D→A
+        //     (avoid new unshielded collider B→A←C created if A→D were chosen,
+        //      which would make B→A→D←C an unshielded collider at D since B⊥C)
+        p = meekR3(onlyAllowedEdits);
+        if (p != null) return p;
+
+        // Fallback: orient using ANM if available, else arbitrary (preserves acyclicity)
+        p = tryOrientUnorientedWithoutPath(onlyAllowedEdits);
+        if (p != null) return p;
+
         if (lastOrientationEdits.isEmpty()) {
             phase = Phase.ORIENTATION_FINISHED;
         }
         return null;
     }
-    
+
     /**
-     * Attempts to orient links based on existing directed links (X → Z).
-     * If a structure X → Z — Y is found and X is not adjacent to Y,
-     * it proposes to orient Z — Y to avoid introducing cycles.
-     *
-     * @param onlyAllowedEdits whether to restrict to allowed orientations
-     * @return a LearningEditProposal if an orientation is possible; null otherwise
+     * Meek Rule R1: for each undirected edge B—C, if there exists A→B where A and C
+     * are not adjacent, orient B→C.
+     * <p>
+     * Rationale: orienting C→B instead would create a new unshielded collider A→B←C
+     * (unshielded because A⊥C), which contradicts the collider set fixed in phase 2.
      */
-    private LearningEditProposal tryOrientFromDirectedLinks(boolean onlyAllowedEdits) {
+    private LearningEditProposal meekR1(boolean onlyAllowedEdits) {
         for (Link<Node> link : probNet.getLinks()) {
-            if (link.isDirected()) {
-                Node nodeX = link.getFrom();
-                Node nodeZ = link.getTo();
-                for (Node nodeY : nodeZ.getSiblings()) {
-                    OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(), true);
-                    LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-                    
-                    // Conditions:
-                    // 1. X is not adjacent to Y
-                    // 2. This orientation hasn't already been tried
-                    // 3. The orientation is not blocked
-                    // 4. If filtering is active, the orientation must be allowed
-                    if (!nodeY.getNeighbors().contains(nodeX)
-                            && !alreadyConsidered(edit, lastOrientationEdits)
-                            && !isBlocked(proposal)
-                            && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
-                        lastOrientationEdits.add(edit);
-                        return proposal;
-                    }
+            if (!link.isDirected()) {
+                LearningEditProposal p = meekR1Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
+                if (p != null) return p;
+                p = meekR1Orient(link.getTo(), link.getFrom(), onlyAllowedEdits);
+                if (p != null) return p;
+            }
+        }
+        return null;
+    }
+
+    /** Tries to apply R1 orienting nodeB→nodeC, given an existing parent A of nodeB. */
+    private LearningEditProposal meekR1Orient(Node nodeB, Node nodeC, boolean onlyAllowedEdits) {
+        for (Node nodeA : nodeB.getParents()) {
+            if (!nodeA.getNeighbors().contains(nodeC)) {
+                LearningEditProposal proposal = buildOrientProposal(nodeB, nodeC, "Meek R1", onlyAllowedEdits);
+                if (proposal != null) return proposal;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Meek Rule R2: for each undirected edge A—C, if there exists a directed path A⟹C,
+     * orient A→C.
+     * <p>
+     * Rationale: orienting C→A instead would create a directed cycle.
+     * The original R2 states the pattern A→B→C; checking for any directed path A⟹C
+     * is equivalent and handles longer chains uniformly.
+     */
+    private LearningEditProposal meekR2(boolean onlyAllowedEdits) {
+        for (Link<Node> link : probNet.getLinks()) {
+            if (!link.isDirected()) {
+                LearningEditProposal p = meekR2Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
+                if (p != null) return p;
+                p = meekR2Orient(link.getTo(), link.getFrom(), onlyAllowedEdits);
+                if (p != null) return p;
+            }
+        }
+        return null;
+    }
+
+    /** Tries to apply R2 orienting nodeA→nodeC when a directed path nodeA⟹nodeC exists. */
+    private LearningEditProposal meekR2Orient(Node nodeA, Node nodeC, boolean onlyAllowedEdits) {
+        if (probNet.existsPath(nodeA, nodeC, true, Collections.emptyList())) {
+            return buildOrientProposal(nodeA, nodeC, "Meek R2", onlyAllowedEdits);
+        }
+        return null;
+    }
+
+    /**
+     * Meek Rule R3: for each undirected edge D—A, if there exist two distinct nodes B and C
+     * such that D—B (undirected), D—C (undirected), B→A, C→A, and B not adjacent to C,
+     * orient D→A.
+     * <p>
+     * Rationale: orienting A→D instead would create a new unshielded collider at D
+     * in the path B→A→D←C, since B and C are not adjacent.
+     */
+    private LearningEditProposal meekR3(boolean onlyAllowedEdits) {
+        for (Link<Node> link : probNet.getLinks()) {
+            if (!link.isDirected()) {
+                LearningEditProposal p = meekR3Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
+                if (p != null) return p;
+                p = meekR3Orient(link.getTo(), link.getFrom(), onlyAllowedEdits);
+                if (p != null) return p;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Tries to apply R3 orienting nodeD→nodeA.
+     * Looks for a pair (B, C) that are both parents of nodeA, both undirected siblings
+     * of nodeD, and not adjacent to each other.
+     */
+    private LearningEditProposal meekR3Orient(Node nodeD, Node nodeA, boolean onlyAllowedEdits) {
+        // Candidates: parents of A that are also undirected siblings of D
+        List<Node> candidates = new ArrayList<>(nodeA.getParents());
+        candidates.retainAll(nodeD.getSiblings());
+
+        for (int i = 0; i < candidates.size(); i++) {
+            Node nodeB = candidates.get(i);
+            for (int j = i + 1; j < candidates.size(); j++) {
+                Node nodeC = candidates.get(j);
+                if (!nodeB.getNeighbors().contains(nodeC)) {
+                    LearningEditProposal proposal = buildOrientProposal(nodeD, nodeA, "Meek R3", onlyAllowedEdits);
+                    if (proposal != null) return proposal;
                 }
             }
         }
         return null;
     }
-    
+
     /**
-     * Attempts to orient non-directed links (X—Z) based on the existence of directed paths
-     * from X to Z or from Z to X, or based on collider patterns between neighbors of Z.
-     *
-     * @param onlyAllowedEdits whether to restrict to allowed orientations
-     * @return a LearningEditProposal if an orientation is possible; null otherwise
+     * Builds and validates an {@link OrientLinkEdit} proposal for orienting {@code from→to}.
+     * Returns {@code null} if the edit was already considered, is blocked, or is not allowed.
      */
-    private LearningEditProposal tryOrientFromNonOrientedLinks(boolean onlyAllowedEdits) {
-        for (Link<Node> link : probNet.getLinks()) {
-            if (!link.isDirected()) {
-                Node nodeX = link.getFrom();
-                Node nodeZ = link.getTo();
-                
-                LearningEditProposal proposal = tryOrientIfPathExists(nodeX, nodeZ, onlyAllowedEdits);
-                if (proposal != null) return proposal;
-                
-                proposal = tryOrientIfPathExists(nodeZ, nodeX, onlyAllowedEdits);
-                if (proposal != null) return proposal;
-                
-                proposal = tryColliderPatterns(nodeX, nodeZ, onlyAllowedEdits);
-                if (proposal != null) return proposal;
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Tries to orient a non-directed link if a directed path exists between the nodes.
-     *
-     * @param from             starting node
-     * @param to               target node
-     * @param onlyAllowedEdits whether to restrict to allowed orientations
-     * @return a LearningEditProposal if the path justifies the orientation; null otherwise
-     */
-    private LearningEditProposal tryOrientIfPathExists(Node from, Node to, boolean onlyAllowedEdits) {
+    private LearningEditProposal buildOrientProposal(Node from, Node to, String motivation, boolean onlyAllowedEdits) {
         OrientLinkEdit edit = new OrientLinkEdit(probNet, from.getVariable(), to.getVariable(), true);
-        LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-        
-        // Conditions:
-        // 1. There is a directed path from 'from' to 'to' in the DAG
-        // 2. This orientation hasn't already been proposed
-        // 3. It is not blocked by any constraint
-        // 4. If restrictions apply, it must be allowed
-        if (probNet.existsPath(from, to, true, Collections.emptyList())
-                && !alreadyConsidered(edit, lastOrientationEdits)
+        LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation(motivation));
+        if (!alreadyConsidered(edit, lastOrientationEdits)
                 && !isBlocked(proposal)
                 && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
             lastOrientationEdits.add(edit);
             return proposal;
-        }
-        return null;
-    }
-    
-    /**
-     * Attempts to orient links based on collider-like patterns (Y—Z—W),
-     * looking for triplets that form converging arrows (e.g., Y → Z ← W)
-     * to prevent unshielded colliders and cycles.
-     *
-     * @param nodeX            the node not adjacent to Y or W
-     * @param nodeZ            the common neighbor
-     * @param onlyAllowedEdits whether to restrict to allowed orientations
-     * @return a LearningEditProposal if a collider orientation is proposed; null otherwise
-     */
-    private LearningEditProposal tryColliderPatterns(Node nodeX, Node nodeZ, boolean onlyAllowedEdits) {
-        List<Node> siblingsZ = new ArrayList<>(nodeZ.getSiblings());
-        siblingsZ.remove(nodeX);
-        for (Node nodeY : siblingsZ) {
-            if (!nodeY.getNeighbors().contains(nodeX)) {
-                for (Node nodeW : siblingsZ) {
-                    if (!nodeY.equals(nodeW)) {
-                        // Skip this combination if:
-                        // - X is not a parent of W
-                        // - or Z already has an oriented link to Y
-                        boolean skip = !nodeX.isParent(nodeW) || probNet.getLink(nodeZ, nodeY, true) != null;
-                        
-                        if (!skip && nodeY.getChildren().contains(nodeW)) {
-                            OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeW.getVariable(), true);
-                            LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-                            
-                            // Check orientation feasibility
-                            if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
-                                    && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
-                                lastOrientationEdits.add(edit);
-                                return proposal;
-                            }
-                        }
-                        
-                        if (!skip && nodeW.getChildren().contains(nodeY)) {
-                            OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeY.getVariable(), true);
-                            LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-                            
-                            // Check orientation feasibility
-                            if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
-                                    && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
-                                lastOrientationEdits.add(edit);
-                                return proposal;
-                            }
-                        }
-                    }
-                }
-            }
         }
         return null;
     }
@@ -975,7 +955,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                             + nodeZ.getName());
         }
         if (edit instanceof OrientLinkEdit) {
-            motivation = new StringEditMotivation("Do not create cycles");
+            motivation = new StringEditMotivation("Meek orientation rule");
         }
         return motivation;
     }
