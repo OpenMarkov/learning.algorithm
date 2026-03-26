@@ -605,7 +605,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 
                         // Avoid duplicates or blocked proposals
                         boolean duplicate =
-                                (edits.size() == 2) && alreadyConsidered((OrientLinkEdit)edits.get(0), (OrientLinkEdit)edits.get(1));
+                                (edits.size() == 2) && alreadyConsidered(edits.get(0), edits.get(1));
 
                         if (!duplicate && !isBlocked(proposal)) {
                             lastCompoundOrientationEdits.add(compoundDirectLinkEdit);
@@ -899,7 +899,16 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             probNet.addLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
         } else if (edit instanceof COrientLinksEdit) {
-            // todo: check if this is correct
+            // After applying a v-structure orientation, reset to HEAD_TO_HEAD_ORIENTATION.
+            // During interactive table population, getNextEdit() peeks ahead and may advance
+            // the phase all the way to ORIENTATION_FINISHED via transitionToNextPhase().
+            // Without this reset, the phase would remain ORIENTATION_FINISHED after the user
+            // accepts the edit, causing getBestEdit() to return null and the list to appear empty.
+            phase = Phase.HEAD_TO_HEAD_ORIENTATION;
+        } else if (edit instanceof OrientLinkEdit) {
+            // After applying a remaining-link orientation, reset to REMAINING_LINKS_ORIENTATION.
+            // Same peeking issue can advance the phase to ORIENTATION_FINISHED prematurely.
+            phase = Phase.REMAINING_LINKS_ORIENTATION;
         }
         resetHistory();
     }
