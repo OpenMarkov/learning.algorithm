@@ -19,6 +19,7 @@ import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.OrientLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
+import org.openmarkov.learning.algorithm.pc.independencetester.CausalDirectionTester;
 import org.openmarkov.learning.algorithm.pc.independencetester.IndependenceTester;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
@@ -77,7 +78,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     protected final List<COrientLinksEdit> lastCompoundOrientationEdits = new ArrayList<>();
     
     protected IndependenceTester independenceTester;
-    
+
+    /**
+     * Optional causal direction tester for orienting remaining undirected links.
+     * When non-null, it is used in the REMAINING_LINKS_ORIENTATION phase to prefer
+     * the direction supported by the Additive Noise Model over an arbitrary choice.
+     */
+    private final CausalDirectionTester causalDirectionTester;
+
     /**
      * Degree of accuracy of the independence test.
      */
@@ -98,19 +106,40 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @param significanceLevel  Statistical significance level
      */
     public PCAlgorithm(
-    		ProbNet probNet, 
-    		CaseDatabase caseDatabase, 
-    		Double alpha, 
+    		ProbNet probNet,
+    		CaseDatabase caseDatabase,
+    		Double alpha,
     		IndependenceTester independenceTester,
             Double significanceLevel) {
-    	
+    	this(probNet, caseDatabase, alpha, independenceTester, significanceLevel, null);
+    }
+
+    /**
+     * Constructor for the PC Algorithm with an optional causal direction tester.
+     *
+     * @param probNet               Probabilistic Network to learn, initially it contains only the nodes.
+     * @param caseDatabase          Database of cases
+     * @param alpha                 Learning rate
+     * @param independenceTester    Independence test method
+     * @param significanceLevel     Statistical significance level
+     * @param causalDirectionTester Optional tester for orienting remaining links; may be null
+     */
+    public PCAlgorithm(
+            ProbNet probNet,
+            CaseDatabase caseDatabase,
+            Double alpha,
+            IndependenceTester independenceTester,
+            Double significanceLevel,
+            CausalDirectionTester causalDirectionTester) {
+
         super(probNet, caseDatabase, alpha);
         this.independenceTester = independenceTester;
         this.significanceLevel = significanceLevel;
+        this.causalDirectionTester = causalDirectionTester;
         this.probNet.getPNESupport().addListener(this);
-        
+
         cache = new HashMap<>();
-        
+
         this.phase = Phase.INITIAL_PHASE;
     }
     
@@ -801,27 +830,40 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             if (!link.isDirected()) {
                 Node nodeX = link.getFrom();
                 Node nodeZ = link.getTo();
-                
-                OrientLinkEdit edit = new OrientLinkEdit(probNet, nodeX.getVariable(), nodeZ.getVariable(), true);
-                LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-                
-                // Conditions:
-                // 1. No path from Z to X to avoid cycle
-                // 2. Not already considered
-                // 3. Not blocked
-                // 4. Allowed if filtering enabled
-                if (!probNet.existsPath(nodeZ, nodeX, true, Collections.emptyList()) && !alreadyConsidered(edit, lastOrientationEdits)
-                        && !isBlocked(proposal) && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
+
+                // When an ANM tester is available, use it to determine the preferred causal direction.
+                // The tester returns a p-value: higher means stronger evidence for that direction.
+                // We try the preferred direction first and fall back to the other if it would create a cycle.
+                Node preferred = nodeX;
+                Node other    = nodeZ;
+                String motivation = "Do not create cycles";
+                if (causalDirectionTester != null) {
+                    double scoreXZ = causalDirectionTester.testDirection(caseDatabase, nodeX, nodeZ);
+                    double scoreZX = causalDirectionTester.testDirection(caseDatabase, nodeZ, nodeX);
+                    if (scoreZX > scoreXZ) {
+                        preferred = nodeZ;
+                        other     = nodeX;
+                    }
+                    motivation = "Causal direction test (ANM)";
+                }
+
+                // Try preferred direction first
+                OrientLinkEdit edit = new OrientLinkEdit(probNet, preferred.getVariable(), other.getVariable(), true);
+                LearningEditProposal proposal = new LearningEditProposal(edit, new StringEditMotivation(motivation));
+                if (!probNet.existsPath(other, preferred, true, Collections.emptyList())
+                        && !alreadyConsidered(edit, lastOrientationEdits)
+                        && !isBlocked(proposal)
+                        && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
                     lastOrientationEdits.add(edit);
                     return proposal;
                 }
-                
-                // Try Z → X
-                edit = new OrientLinkEdit(probNet, nodeZ.getVariable(), nodeX.getVariable(), true);
+
+                // Fall back to opposite direction
+                edit = new OrientLinkEdit(probNet, other.getVariable(), preferred.getVariable(), true);
                 proposal = new LearningEditProposal(edit, new StringEditMotivation("Do not create cycles"));
-                
-                // Same conditions, different direction
-                if (!alreadyConsidered(edit, lastOrientationEdits) && !isBlocked(proposal)
+                if (!probNet.existsPath(preferred, other, true, Collections.emptyList())
+                        && !alreadyConsidered(edit, lastOrientationEdits)
+                        && !isBlocked(proposal)
                         && (!onlyAllowedEdits || isOrientationAllowed(edit))) {
                     lastOrientationEdits.add(edit);
                     return proposal;
