@@ -97,25 +97,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     private Phase phase;
     
     /**
-     * Constructor for the PC Algorithm
-     *
-     * @param probNet            Probabilistic Network to learn, initially it contains only the nodes.
-     * @param caseDatabase       Database of cases
-     * @param alpha              Learning rate
-     * @param independenceTester Independence test method
-     * @param significanceLevel  Statistical significance level
-     */
-    public PCAlgorithm(
-    		ProbNet probNet,
-    		CaseDatabase caseDatabase,
-    		Double alpha,
-    		IndependenceTester independenceTester,
-            Double significanceLevel) {
-    	this(probNet, caseDatabase, alpha, independenceTester, significanceLevel, null);
-    }
-
-    /**
-     * Constructor for the PC Algorithm with an optional causal direction tester.
+     * Constructor for the PC Algorithm.
      *
      * @param probNet               Probabilistic Network to learn, initially it contains only the nodes.
      * @param caseDatabase          Database of cases

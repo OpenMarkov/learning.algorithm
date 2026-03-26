@@ -302,7 +302,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         runAlgorithmToCompletion(pc);
 
@@ -344,7 +344,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         Map<String, Integer> counts = runAlgorithmToCompletion(pc);
 
@@ -368,7 +368,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         runAlgorithmToCompletion(pc);
 
@@ -406,7 +406,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         Map<String, Integer> counts = runAlgorithmToCompletion(pc);
 
@@ -432,7 +432,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         boolean sawRemoval = false;
         boolean sawOrientation = false;
@@ -476,7 +476,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         boolean sawRemoval = false;
         boolean sawOrientation = false;
@@ -557,7 +557,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         Map<String, Integer> counts = runAlgorithmWithExactGuiFlow(pc, probNet, 50);
 
@@ -584,7 +584,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         Map<String, Integer> counts = runAlgorithmWithExactGuiFlow(pc, probNet, 50);
 
@@ -620,7 +620,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         // 50 peeks — same as SHOWING_EDIT_NUM in InteractiveLearningDialog
         Map<String, Integer> counts = runAlgorithmWithGuiPeeking(pc, 50);
@@ -683,7 +683,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         runAlgorithmToCompletion(pc);
 
@@ -763,7 +763,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         runAlgorithmToCompletion(pc);
 
@@ -813,7 +813,7 @@ public class PCAlgorithmIntegrationTest {
         ProbNet probNet = buildCompleteUndirectedGraph(variables);
 
         PCAlgorithm pc = new PCAlgorithm(probNet, db, SIGNIFICANCE,
-                new CrossEntropyIndependenceTester(), SIGNIFICANCE);
+                new CrossEntropyIndependenceTester(), SIGNIFICANCE, null);
 
         Map<String, Integer> counts = runAlgorithmWithGuiPeeking(pc, 50);
 
