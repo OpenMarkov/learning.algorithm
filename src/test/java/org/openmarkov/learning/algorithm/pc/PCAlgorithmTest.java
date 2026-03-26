@@ -72,7 +72,7 @@ public class PCAlgorithmTest {
         tester.setIndependence("A", "C", 0.5);
         // Others are dependent (p-value = 0.0)
 
-        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05);
+        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05, null);
 
         // Run logic. Since PCAlgorithm is step-based (getBestEdit), we might need to
         // loop.
@@ -137,7 +137,7 @@ public class PCAlgorithmTest {
         // package.
         // Package is org.openmarkov.learning.algorithm.pc, so we ARE in same package.
 
-        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05);
+        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05, null);
 
         // Manually populate cache to simulate that A-C were removed with empty sepset
         org.openmarkov.learning.algorithm.pc.util.NodePair pair = new org.openmarkov.learning.algorithm.pc.util.NodePair(

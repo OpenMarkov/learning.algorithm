@@ -36,7 +36,7 @@ public class TestPC {
             }
         };
 
-        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05);
+        PCAlgorithm pc = new PCAlgorithm(probNet, null, 0.05, tester, 0.05, null);
 
         System.out.println("Applying getBestEdit");
         LearningEditProposal bestEdit = pc.getBestEdit(false, true);
