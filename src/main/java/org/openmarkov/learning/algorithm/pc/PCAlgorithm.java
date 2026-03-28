@@ -1019,12 +1019,15 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                 }
             }
 
-            // Reset phase: getNextEdit() called for table population may have
-            // advanced the phase beyond INITIAL_PHASE without executing any edit.
-            // A RemoveLinkEdit always belongs to INITIAL_PHASE, so we must
-            // restore the phase here to ensure HEAD_TO_HEAD_ORIENTATION (collider
-            // detection) is not skipped on the next getBestEdit() call.
+            // Reset phase and PC-Stable skeleton state: getNextEdit() called for
+            // table population in interactive mode may have advanced stableDepth
+            // well beyond what the current graph needs (by peeking through all depths
+            // until null is returned).  If we only reset phase but not stableDepth,
+            // the next call to getOptimalEditInitialPhase() will find
+            // hasAnyPairAtDepth(stableDepth)==false immediately (stale snapshot, high
+            // depth) and jump straight to orientation, skipping pending removals.
             phase = Phase.INITIAL_PHASE;
+            resetSkeletonState();
         }
         //An AddLinkEdit can only be done by the user. Just undirect the link
         if (edit instanceof AddLinkEdit addLinkEdit) {
