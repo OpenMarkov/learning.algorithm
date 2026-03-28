@@ -64,20 +64,87 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         // Prevent numerical instabilities near zero
         chiS = (Math.abs(chiS) < 1.0e-10) ? 0.0 : chiS;
         
-        // Compute degrees of freedom: (#states(Z)) * (|X|-1) * (|Y|-1)
-        long degreesOfFreedom = numStatesAdjacency * (nodeX.getVariable().getNumStates() - 1) * (
-                nodeY.getVariable().getNumStates() - 1
-        );
-        
-        // Adjust degrees of freedom if state space is too small
-        if (potentialSize < degreesOfFreedom)
-            degreesOfFreedom = potentialSize;
-        if (degreesOfFreedom <= 0)
-            degreesOfFreedom = 1;
-        
+        // Compute the effective degrees of freedom by summing (|X_z|-1)*(|Y_z|-1) over strata z,
+        // where |X_z| and |Y_z| are the number of states of X and Y with non-zero marginal count
+        // in stratum z.  This correctly handles degenerate strata where one variable is constant
+        // (e.g., a deterministic OR node): those strata contribute 0 to the df, and if ALL strata
+        // are degenerate the effective df is 0 and the test is undefined — we conservatively
+        // declare dependence (return 0.0) rather than a spurious perfect-independence score.
+        long degreesOfFreedom = computeEffectiveDf(
+                caseDatabase, nodeX, nodeY, adjacencySubset, numStatesAdjacency);
+
+        if (degreesOfFreedom <= 0) {
+            // All strata have X or Y constant; the chi-square test is undefined here.
+            // Conservative choice: declare dependence.
+            return 0.0;
+        }
+
         return StatisticalUtilities.chiSquarePValue(chiS, degreesOfFreedom); // Return the p-value
     }
     
+    /**
+     * Computes the effective degrees of freedom for the conditional independence test X ⊥ Y | Z.
+     * <p>
+     * The theoretical df = |Z| * (|X|-1) * (|Y|-1) overcounts when some strata of Z have X or Y
+     * with fewer than their full number of states observed (e.g. a deterministic node that is
+     * determined by its parents in Z).  The effective df sums (|X_z|-1)*(|Y_z|-1) over each
+     * stratum z, where |X_z| and |Y_z| are the number of distinct values of X (resp. Y) that
+     * appear in stratum z.  Strata where X or Y is constant contribute 0, so if every stratum
+     * is degenerate the returned value is 0 (test undefined → caller should declare dependence).
+     *
+     * @param nodeX           first variable in the test
+     * @param nodeY           second variable in the test
+     * @param conditioningSet the conditioning set Z
+     * @param numStatesZ      the total number of Z-combinations (product of state counts)
+     * @return the effective degrees of freedom (0 if all strata are degenerate)
+     */
+    private long computeEffectiveDf(CaseDatabase caseDatabase, Node nodeX, Node nodeY,
+                                    List<Node> conditioningSet, long numStatesZ) {
+        int numStatesX = nodeX.getVariable().getNumStates();
+        int numStatesY = nodeY.getVariable().getNumStates();
+
+        // Build joint frequency table for (X, Y, Z1, ..., Zn).
+        // Variable order: X fastest-varying, then Y, then Z (OpenMarkov little-endian convention).
+        List<Node> xyzNodes = new ArrayList<>();
+        xyzNodes.add(nodeX);
+        xyzNodes.add(nodeY);
+        xyzNodes.addAll(conditioningSet);
+        TablePotential xyzTable = absoluteFrequencies(caseDatabase, xyzNodes);
+        double[] freq = xyzTable.getValues();
+        // freq[x + numStatesX*(y + numStatesY*z)] = n(X=x, Y=y, Z=z)
+
+        long effectiveDf = 0;
+        int blockSize = numStatesX * numStatesY;
+
+        for (int z = 0; z < numStatesZ; z++) {
+            int base = z * blockSize;
+
+            // Count distinct X values observed in this stratum
+            int xObservedStates = 0;
+            for (int x = 0; x < numStatesX; x++) {
+                double margXZ = 0;
+                for (int y = 0; y < numStatesY; y++) {
+                    margXZ += freq[base + x + numStatesX * y];
+                }
+                if (margXZ > 0) xObservedStates++;
+            }
+
+            // Count distinct Y values observed in this stratum
+            int yObservedStates = 0;
+            for (int y = 0; y < numStatesY; y++) {
+                double margYZ = 0;
+                for (int x = 0; x < numStatesX; x++) {
+                    margYZ += freq[base + x + numStatesX * y];
+                }
+                if (margYZ > 0) yObservedStates++;
+            }
+
+            effectiveDf += (long) Math.max(0, xObservedStates - 1)
+                         * (long) Math.max(0, yObservedStates - 1);
+        }
+        return effectiveDf;
+    }
+
     /**
      * Method that calculates the cross entropy between two nodes given a
      * conditional set. We use the formula: CE(X,Y|Z) = H(X|Z) - H(X|Y,Z) (where H means 'entropy').
