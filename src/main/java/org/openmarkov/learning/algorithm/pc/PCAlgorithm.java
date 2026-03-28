@@ -90,7 +90,22 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * Degree of accuracy of the independence test.
      */
     protected double significanceLevel;
-    
+
+    /**
+     * PC-Stable: current conditioning-set depth being explored in the skeleton phase.
+     * Persists across getBestEdit calls so all removals at depth d are found before
+     * advancing to depth d+1 (order-independent skeleton discovery).
+     */
+    private int stableDepth = 0;
+
+    /**
+     * PC-Stable: snapshot of each node's neighbors at the start of {@link #stableDepth}.
+     * Independence tests at depth d always use this frozen snapshot as the candidate
+     * conditioning set, not the (potentially modified) live adjacency.
+     * {@code null} means the snapshot has not been taken yet for the current depth.
+     */
+    private Map<Node, List<Node>> stableAdjSnapshot = null;
+
     /**
      * Current algorithm phase
      */
@@ -124,7 +139,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 
         this.phase = Phase.INITIAL_PHASE;
     }
-    
+
     /**
      * Initializes the algorithm. Resets phase and cache so that a fresh run
      * (e.g. via the "Finish" button in the interactive dialog) is not affected
@@ -135,6 +150,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         super.init(modelNetUse);
         phase = Phase.INITIAL_PHASE;
         cache.clear();
+        resetSkeletonState();
         resetHistory();
     }
 
@@ -178,16 +194,25 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * Finds the optimal edit based on current algorithm phase and adjacency size.
+     * Finds the optimal edit based on current algorithm phase.
+     * <p>
+     * For {@code INITIAL_PHASE}, uses PC-Stable logic: adjacency snapshots are frozen
+     * at the start of each depth level so that all pairs at depth d are tested with the
+     * same conditioning-set candidates, regardless of which edges have already been
+     * removed at that depth.
      *
      * @param onlyAllowedEdits  if true, only allowed edits are considered
      * @param onlyPositiveEdits if true, only positive edits are considered
      * @return LearningEditProposal
      */
     public LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        if (phase == Phase.INITIAL_PHASE) {
+            return getOptimalEditInitialPhase(onlyAllowedEdits, onlyPositiveEdits);
+        }
+
+        // Orientation phases: no depth-iteration needed; loop is just a safety bound.
         int adjacencySize = 0;
         LearningEditProposal bestEditProposal;
-        
         while (maxOfAdjacencies() > adjacencySize) {
             bestEditProposal = findBestEditInCurrentPhase(adjacencySize, onlyAllowedEdits, onlyPositiveEdits);
             if (bestEditProposal != null) {
@@ -195,30 +220,85 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             }
             adjacencySize++;
         }
-        
-        // bestEditProposal == null. Transition between phases
+
         return transitionToNextPhase(onlyAllowedEdits);
     }
-    
+
     /**
-     * Find the best edit by evaluating separation sets for node pairs.
-     * This method iterates through all nodes and their neighbors,
-     * calculating the best separation set for each pair.
-     *
-     * @param adjacencySize
-     * @param onlyAllowedEdits
-     * @param onlyPositiveEdits
-     * @return
+     * PC-Stable skeleton discovery: iterates over increasing conditioning-set depths
+     * using a frozen adjacency snapshot per depth, so that removals within a depth
+     * do not affect the conditioning sets used for other pairs at the same depth.
+     */
+    private LearningEditProposal getOptimalEditInitialPhase(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        // Ensure a snapshot exists for the current depth.
+        if (stableAdjSnapshot == null) {
+            takeAdjacencySnapshot();
+        }
+
+        while (hasAnyPairAtDepth(stableDepth)) {
+            separationSetsLogic(stableDepth, onlyPositiveEdits);
+            LearningEditProposal proposal = getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
+            if (proposal != null) {
+                return proposal;
+            }
+            // No removal found at this depth: advance and refresh snapshot.
+            stableDepth++;
+            takeAdjacencySnapshot();
+        }
+
+        return transitionToNextPhase(onlyAllowedEdits);
+    }
+
+    /**
+     * Snapshots current adjacencies for use as PC-Stable conditioning-set candidates.
+     */
+    private void takeAdjacencySnapshot() {
+        stableAdjSnapshot = new HashMap<>();
+        for (Node node : probNet.getNodes()) {
+            stableAdjSnapshot.put(node, new ArrayList<>(node.getNeighbors()));
+        }
+    }
+
+    /**
+     * Resets the PC-Stable skeleton state (depth counter and snapshot).
+     * Must be called whenever the skeleton phase is restarted from scratch.
+     */
+    private void resetSkeletonState() {
+        stableDepth = 0;
+        stableAdjSnapshot = null;
+    }
+
+    /**
+     * Returns true if there is at least one currently-present undirected edge (X–Y)
+     * for which the snapshot conditioning set {@code snapshot[X] \ {Y}} has at least
+     * {@code depth} elements and the edge has not yet been removed.
+     */
+    private boolean hasAnyPairAtDepth(int depth) {
+        for (Node nodeX : probNet.getNodes()) {
+            List<Node> snapshotNeighbors = stableAdjSnapshot.getOrDefault(nodeX, Collections.emptyList());
+            // Need at least depth+1 snapshot neighbors so that snapshot[X]\{Y} has size >= depth
+            if (snapshotNeighbors.size() - 1 < depth) {
+                continue;
+            }
+            for (Node nodeY : nodeX.getSiblings()) {
+                PCEditMotivation m = cache.get(new NodePair(nodeX, nodeY));
+                if (m == null || m.getScore() != ALREADY_DONE) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Dispatches orientation-phase best-edit search (HEAD_TO_HEAD / REMAINING).
+     * The {@code adjacencySize} parameter is kept for API symmetry but is not used
+     * by either orientation method.
      */
     private LearningEditProposal findBestEditInCurrentPhase(int adjacencySize,
                                                             boolean onlyAllowedEdits,
                                                             boolean onlyPositiveEdits) {
-        
         return switch (phase) {
-            case INITIAL_PHASE -> {
-                separationSetsLogic(adjacencySize, onlyPositiveEdits);
-                yield getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
-            }
             case HEAD_TO_HEAD_ORIENTATION -> getOrientationEdit(onlyAllowedEdits);
             case REMAINING_LINKS_ORIENTATION -> orientRemainingLinks(onlyAllowedEdits);
             default -> null;
@@ -227,17 +307,24 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     
     /**
      * Logic for evaluating separation sets in the INITIAL_PHASE.
-     * This method iterates through all nodes and their neighbors,
-     * calculating the best separation set for each pair of nodes.
+     * Iterates through all currently-present undirected edges (X–Y) and tests
+     * independence at the given depth.
+     * <p>
+     * <b>PC-Stable</b>: the candidate conditioning set for pair (X, Y) is taken from
+     * {@link #stableAdjSnapshot}{@code [X] \ {Y}} — the snapshot captured at the
+     * <em>start</em> of the current depth — rather than from the live adjacency of X.
+     * This ensures that removing an edge at depth d does not alter the conditioning
+     * sets used for other pairs at the same depth, making the skeleton order-independent.
      *
-     * @param adjacencySize     Size of the adjacency set to consider
+     * @param adjacencySize     Size of the conditioning set to consider (= stableDepth)
      * @param onlyPositiveEdits If true, only positive edits are considered
      */
     private void separationSetsLogic(int adjacencySize, boolean onlyPositiveEdits) {
-        // Existing separation-set evaluation logic
         for (Node nodeX : probNet.getNodes()) {
             for (Node nodeY : nodeX.getSiblings()) {
-                List<Node> adjacencySubset = new ArrayList<>(nodeX.getNeighbors());
+                // PC-Stable: use the frozen snapshot for conditioning set candidates.
+                List<Node> snapshotNeighbors = stableAdjSnapshot.getOrDefault(nodeX, Collections.emptyList());
+                List<Node> adjacencySubset = new ArrayList<>(snapshotNeighbors);
                 adjacencySubset.remove(nodeY);
                 
                 RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(
@@ -589,11 +676,11 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
                         // Collect only orientations that are still undirected (siblings)
                         ArrayList<OrientLinkEdit> edits = new ArrayList<>();
 
-                        if (allowedXY && nodeX.isSibling(nodeY)) {
+                        if (allowedXY && nodeX.isSibling(nodeY) && !createsContradictoryCollider(nodeX, nodeY)) {
                             // X–Y is undirected: orient X->Y
                             edits.add(orientXY);
                         }
-                        if (allowedZY && nodeZ.isSibling(nodeY)) {
+                        if (allowedZY && nodeZ.isSibling(nodeY) && !createsContradictoryCollider(nodeZ, nodeY)) {
                             // Z–Y is undirected: orient Z->Y (critical in A->B, B->E, C--E)
                             edits.add(orientZY);
                         }
@@ -629,7 +716,41 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 
         // No applicable orientation found
         return null;
-    }   
+    }
+
+    /**
+     * Returns true if orienting {@code from → to} would create an unshielded collider
+     * {@code from → to ← existingParent} that contradicts the separation set of the pair
+     * {@code (from, existingParent)}.
+     *
+     * <p>A contradiction occurs when {@code to} belongs to {@code sep(from, existingParent)},
+     * meaning the original skeleton phase concluded that conditioning on {@code to} makes
+     * {@code from} and {@code existingParent} independent — i.e., {@code to} is a non-collider
+     * on that path.  Orienting {@code from → to} would make it a collider, which is inconsistent.
+     *
+     * @param from the proposed tail node of the new directed edge
+     * @param to   the proposed head node of the new directed edge
+     * @return true if the orientation would produce a contradictory collider
+     */
+    private boolean createsContradictoryCollider(Node from, Node to) {
+        for (Node existingParent : to.getParents()) {
+            // Only unshielded triples matter (from and existingParent must not be adjacent)
+            if (from.getNeighbors().contains(existingParent)) {
+                continue;
+            }
+            PCEditMotivation sep = cache.get(new NodePair(from, existingParent));
+            if (sep != null && sep.getSeparationSet().contains(to)) {
+                return true;
+            }
+            // Also check the reverse key order
+            sep = cache.get(new NodePair(existingParent, from));
+            if (sep != null && sep.getSeparationSet().contains(to)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Orients remaining undirected links using Meek's orientation rules (R1, R2, R3)
      * followed by a fallback for truly undetermined edges.
@@ -850,6 +971,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     @Override public void afterUndoingEdit(PNEdit edit) {
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             phase = Phase.INITIAL_PHASE;
+            resetSkeletonState();
             Node nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
             Node nodeY = probNet.getNode(removeLinkEdit.getVariableTo());
             List<Node> separationSet = cache.get(new NodePair(nodeX, nodeY)).getSeparationSet();
@@ -877,13 +999,22 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             List<Node> separationSet = cachedScore != null ? cachedScore.getSeparationSet() : new ArrayList<>();
             cache.put(new NodePair(nodeX, nodeY), new PCEditMotivation(ALREADY_DONE, separationSet));
 
-            // Remove the cached values X node's neighbors that contained Y in
-            // the separation set (and vice versa)
+            // Invalidate cached tests whose separation set contained X or Y,
+            // since those conditioning sets may no longer be subsets of the new adjacency.
+            // Both sides must be invalidated (symmetric).
             for (Node neighborNode : nodeX.getNeighbors()) {
                 NodePair pair = new NodePair(nodeX, neighborNode);
                 PCEditMotivation neighborScore = cache.get(pair);
                 if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE
                         && neighborScore.getSeparationSet().contains(nodeY)) {
+                    cache.remove(pair);
+                }
+            }
+            for (Node neighborNode : nodeY.getNeighbors()) {
+                NodePair pair = new NodePair(nodeY, neighborNode);
+                PCEditMotivation neighborScore = cache.get(pair);
+                if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE
+                        && neighborScore.getSeparationSet().contains(nodeX)) {
                     cache.remove(pair);
                 }
             }
@@ -902,6 +1033,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             probNet.removeLink(nodeX, nodeY, true);
             probNet.addLink(nodeX, nodeY, false);
             phase = Phase.INITIAL_PHASE;
+            resetSkeletonState();
         } else if (edit instanceof COrientLinksEdit) {
             // After applying a v-structure orientation, reset to HEAD_TO_HEAD_ORIENTATION.
             // During interactive table population, getNextEdit() peeks ahead and may advance
