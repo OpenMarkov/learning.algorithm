@@ -72,7 +72,7 @@ public class MonteCarloTester implements IndependenceTester {
      *
      * @param numPermutations number of random permutations (must be ≥ 1)
      * @param seed            seed for the random number generator
-     * @throws IllegalArgumentException if {@code numPermutations} < 1
+     * @throws IllegalArgumentException if {@code numPermutations} &lt; 1
      */
     public MonteCarloTester(int numPermutations, long seed) {
         if (numPermutations < 1) {
