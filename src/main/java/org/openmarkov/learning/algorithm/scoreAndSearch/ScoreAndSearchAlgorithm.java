@@ -31,6 +31,14 @@ public abstract class ScoreAndSearchAlgorithm extends LearningAlgorithm {
 	 */
 	protected Metric metric;
 
+	/**
+	 * Constructs a score-and-search algorithm with the given metric.
+	 *
+	 * @param probNet      the probabilistic network to learn
+	 * @param caseDatabase the case database to learn from
+	 * @param metric       the scoring metric used to evaluate edits
+	 * @param alpha        significance level or smoothing parameter
+	 */
 	public ScoreAndSearchAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
 		super(probNet, caseDatabase, alpha);
 		this.metric = metric;

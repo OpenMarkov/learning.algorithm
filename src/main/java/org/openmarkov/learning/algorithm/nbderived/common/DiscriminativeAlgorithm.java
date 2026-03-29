@@ -15,6 +15,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+/**
+ * Abstract base class for discriminative Bayesian classifier algorithms that extend Naive Bayes
+ * with additional inter-feature links. Uses a maximum weight spanning tree (Chow-Liu) for
+ * determining feature dependencies.
+ */
 public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm implements IDiscriminativeBayes {
 
     /**
@@ -37,6 +42,14 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
 
 
 
+    /**
+     * Constructs a discriminative algorithm with the given parameters.
+     *
+     * @param probNet      the probabilistic network to learn
+     * @param caseDatabase the case database to learn from
+     * @param metric       the scoring metric for evaluating inter-feature links
+     * @param alpha        smoothing or significance parameter
+     */
     public DiscriminativeAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
         this.lastBestEdits = new ArrayList<PNEdit>();
@@ -98,6 +111,12 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
     }
 
 
+    /**
+     * Redirects the maximum weight spanning tree edges to point away from the given root variable.
+     *
+     * @param root the variable to use as the root of the directed tree
+     * @return a list of directed link edits forming the redirected tree
+     */
     protected List<BaseLinkEdit> redirectMaximumWeightSpanningTree(Variable root){
         List<BaseLinkEdit> redirectedTree = new ArrayList<>();
         List<Variable> nodes = new ArrayList<>();
@@ -132,6 +151,11 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
     }
 
 
+    /**
+     * Returns a randomly selected non-root variable.
+     *
+     * @return a random non-root variable
+     */
     protected Variable getRandomVariable(){
         return getNonRootVariables().get(new Random().nextInt(getNonRootVariables().size()-1));
     }

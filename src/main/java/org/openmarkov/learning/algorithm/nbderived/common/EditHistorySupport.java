@@ -24,14 +24,28 @@ public class EditHistorySupport {
         this.history = history;
     }
 
+    /**
+     * Clears all recorded edit history.
+     */
     public void reset() {
         history.clear();
     }
 
+    /**
+     * Marks the given edit as already considered.
+     *
+     * @param edit the edit to mark
+     */
     public void markEditAsConsidered(BaseLinkEdit edit) {
         history.add(edit);
     }
 
+    /**
+     * Checks whether the given edit has already been considered.
+     *
+     * @param edit the edit to check
+     * @return true if this edit was previously marked as considered
+     */
     public boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
         return history.contains(edit);
     }
