@@ -5,6 +5,9 @@ import org.openmarkov.core.model.network.Variable;
 
 import java.util.List;
 
+/**
+ * Interface for discriminative Bayesian classifiers that operate around a designated root (class) variable.
+ */
 public interface IDiscriminativeBayes {
 
     /**
@@ -25,8 +28,9 @@ public interface IDiscriminativeBayes {
     Node getRootNode();
 
     /**
-     * Returns the variable associated to the root node
-     * @return
+     * Returns the variable associated to the root node.
+     *
+     * @return the root variable
      */
     Variable getRootVariable();
 

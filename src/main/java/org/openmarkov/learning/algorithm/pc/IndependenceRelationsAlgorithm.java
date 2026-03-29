@@ -31,6 +31,13 @@ public abstract class IndependenceRelationsAlgorithm extends LearningAlgorithm {
 	/**  Intended for future use. */
 	protected boolean undirectedStructureFound = false;
 
+	/**
+	 * Constructs an independence-relations-based learning algorithm.
+	 *
+	 * @param probNet      the probabilistic network to learn
+	 * @param caseDatabase the case database to learn from
+	 * @param alpha        the significance level for independence tests
+	 */
 	public IndependenceRelationsAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, double alpha) {
 		super(probNet, caseDatabase, alpha);
 	}
@@ -39,7 +46,7 @@ public abstract class IndependenceRelationsAlgorithm extends LearningAlgorithm {
 	 * Initializes the algorithm depending on the model net use selected
 	 * by the user.
 	 *
-	 * @param modelNetUse
+	 * @param modelNetUse the model network usage configuration
 	 */
 	@Override public void init(ModelNetUse modelNetUse) {
 

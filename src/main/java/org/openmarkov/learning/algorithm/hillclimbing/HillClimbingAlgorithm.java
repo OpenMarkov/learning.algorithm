@@ -135,22 +135,27 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 		return bestEdit;
 	}
 
+	/**
+	 * Resets the edit history so that previously considered edits can be reconsidered.
+	 */
 	protected void resetHistory() {
 		lastBestEdits.clear();
 	}
 
 	/**
-	 * Store last best edit
+	 * Marks the given edit as already considered in this iteration.
 	 *
-	 * @param edit
+	 * @param edit the edit to mark
 	 */
 	protected void markEditAsConsidered(BaseLinkEdit edit) {
 		lastBestEdits.add(edit);
 	}
 
 	/**
-	 * @param edit
-	 * @return true iff it is an edit already considered
+	 * Checks whether the given edit has already been considered in this iteration.
+	 *
+	 * @param edit the edit to check
+	 * @return true if the edit has already been considered
 	 */
 	protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
 		return lastBestEdits.contains(edit);
