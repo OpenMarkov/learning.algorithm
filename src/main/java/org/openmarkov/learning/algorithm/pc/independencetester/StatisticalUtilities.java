@@ -224,7 +224,7 @@ public final class StatisticalUtilities {
      *
      * @param xx argument (must be > 0)
      * @return ln(Gamma(xx))
-     * @throws IllegalArgumentException if xx <= 0
+     * @throws IllegalArgumentException if xx &lt;= 0
      */
     public static double gammaLn(double xx) {
         if (xx <= 0.0) {
