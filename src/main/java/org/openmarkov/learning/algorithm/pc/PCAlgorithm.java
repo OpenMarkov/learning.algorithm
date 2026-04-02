@@ -158,8 +158,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * Method that returns the best edit in each step of the algorithm or null
      * if there are no more edits to consider.
      *
-     * @param onlyAllowedEdits
-     * @param onlyPositiveEdits
+     * @param onlyAllowedEdits the only allowed edits
+     * @param onlyPositiveEdits the only positive edits
      * @return LearningEditProposal, or null if no edits are available.
      */
     @Override
@@ -372,11 +372,11 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     /**
      * Evaluates separation sets for a given pair of nodes and updates the cache.
      *
-     * @param nodeX
-     * @param nodeY
-     * @param adjacencySubset
-     * @param adjacencySize
-     * @param onlyPositiveEdits
+     * @param nodeX the node x
+     * @param nodeY the node y
+     * @param adjacencySubset the adjacency subset
+     * @param adjacencySize the adjacency size
+     * @param onlyPositiveEdits the only positive edits
      */
     private void evaluateSeparationSets(Node nodeX, Node nodeY, List<Node> adjacencySubset, int adjacencySize, boolean onlyPositiveEdits) {
         double bestScore = 0.0;
@@ -451,9 +451,9 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
 
     
     /**
-     * @param removeLinkEdit
-     * @param bestMotivation
-     * @param onlyAllowedEdits
+     * @param removeLinkEdit the remove link edit
+     * @param bestMotivation the best motivation
+     * @param onlyAllowedEdits the only allowed edits
      * @return true if the edit is valid, false otherwise
      */
     private boolean isValidEdit(RemoveLinkEdit removeLinkEdit, PCEditMotivation bestMotivation,
@@ -470,7 +470,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * DirectLinkEdit contains these edits. Else, it contains the remaining
      * orientations.
      *
-     * @param onlyAllowedEdits
+     * @param onlyAllowedEdits the only allowed edits
      * @return LearningEditProposal the orientation edit
      */
     public LearningEditProposal getOrientationEdit(boolean onlyAllowedEdits) {
@@ -573,8 +573,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * @param edit
-     * @param consideredEdits
+     * @param edit the edit
+     * @param consideredEdits the considered edits
      * @return true if the edit has already been considered, false otherwise
      */
     public boolean alreadyConsidered(BaseLinkEdit edit, Set<PNEdit> consideredEdits) {
@@ -584,8 +584,8 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * @param edit1
-     * @param edit2
+     * @param edit1 the edit1
+     * @param edit2 the edit2
      * @return true if the edits have already been considered, false otherwise
      */
     public boolean alreadyConsidered(OrientLinkEdit edit1, OrientLinkEdit edit2) {
@@ -957,7 +957,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     }
     
     /**
-     * @param orientLinkEdit
+     * @param orientLinkEdit the orient link edit
      * @return true if the orientation is allowed, false otherwise
      */
     private boolean isOrientationAllowed(OrientLinkEdit orientLinkEdit) {

@@ -129,14 +129,14 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     /**
      * Store last best edit
      *
-     * @param edit
+     * @param edit the edit
      */
     protected void markEditAsConsidered(BaseLinkEdit edit) {
         lastBestEdits.add(edit);
     }
     
     /**
-     * @param edit
+     * @param edit the edit
      * @return true if it is an edit already considered
      */
     protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
@@ -196,8 +196,8 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     /**
      * Checks whether we need to compute a new Xmax -- step 5.1. KDB algorithm
      *
-     * @param xMax
-     * @return
+     * @param xMax the x max
+     * @return the result
      */
     private boolean needToComputeXMax(Node xMax) {
         return xMax == null || (xMax.getNumParents() - 1) >= Math.min(kDependence, domainFeatures.size() - 1);

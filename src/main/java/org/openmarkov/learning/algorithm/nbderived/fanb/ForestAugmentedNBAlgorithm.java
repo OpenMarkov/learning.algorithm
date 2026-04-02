@@ -132,14 +132,14 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     /**
      * Store last best edit
      *
-     * @param edit
+     * @param edit the edit
      */
     protected void markEditAsConsidered(BaseLinkEdit edit) {
         lastBestEdits.add(edit);
     }
     
     /**
-     * @param edit
+     * @param edit the edit
      * @return true if it is an edit already considered
      */
     protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {

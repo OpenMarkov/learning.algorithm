@@ -306,10 +306,10 @@ public class EMAlgorithm extends LearningAlgorithm {
         /**
          * Constructor for JointProbabilityCalculator.
          *
-         * @param variables
-         * @param dataCase
-         * @param inferenceAlgorithm
-         * @param expandedNet
+         * @param variables the variables
+         * @param dataCase the data case
+         * @param inferenceAlgorithm the inference algorithm
+         * @param expandedNet the expanded net
          */
         public JointProbabilityCalculator(List<Variable> variables, int[] dataCase, HuginPropagation inferenceAlgorithm,
                 ProbNet expandedNet) {
