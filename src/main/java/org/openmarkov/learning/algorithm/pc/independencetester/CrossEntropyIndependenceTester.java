@@ -196,7 +196,7 @@ public class CrossEntropyIndependenceTester implements IndependenceTester {
         
         // Compute the absolute joint frequency table for [X, Z]
         TablePotential absoluteFreqPotential = absoluteFrequencies(caseDatabase, nodeAndAdjacency);
-        double[] freq = absoluteFreqPotential.values;
+        double[] freq = absoluteFreqPotential.getValues();
         
         // Normalize frequencies: convert counts to probabilities
         for (int i = 0; i < freq.length; i++) {

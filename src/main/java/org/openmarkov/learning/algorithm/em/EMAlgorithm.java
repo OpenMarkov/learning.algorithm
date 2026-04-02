@@ -170,9 +170,9 @@ public class EMAlgorithm extends LearningAlgorithm {
             for (TablePotential potential : potentials) {
                 Variable childVariable = potential.getVariables().get(0);
                 int childNumStates = childVariable.getNumStates();
-                double[] theta = potential.values;
-                double[] p_ijk = expertKnowledge.get(potential).values;
-                double[] expectedCounts = expectedCountsMap.get(potential).values;
+                double[] theta = potential.getValues();
+                double[] p_ijk = expertKnowledge.get(potential).getValues();
+                double[] expectedCounts = expectedCountsMap.get(potential).getValues();
                 double[] expectedCountsParents = new double[expectedCounts.length / childNumStates];
 
                 // Marginalize child variable: M[x,u]-> M[u]
@@ -191,10 +191,10 @@ public class EMAlgorithm extends LearningAlgorithm {
             currentLogLikelihood = 0.0;
             for (TablePotential potential : potentials) {
                 TablePotential expectedCounts = expectedCountsMap.get(potential);
-                double[] theta = potential.values;
+                double[] theta = potential.getValues();
                 for (int i = 0; i < theta.length; ++i) {
-                    if (expectedCounts.values[i] > 0) {
-                        currentLogLikelihood += expectedCounts.values[i] * Math.log(theta[i]);
+                    if (expectedCounts.getValues()[i] > 0) {
+                        currentLogLikelihood += expectedCounts.getValues()[i] * Math.log(theta[i]);
                     }
                 }
 
@@ -211,8 +211,8 @@ public class EMAlgorithm extends LearningAlgorithm {
     }
 
     private static void sum(TablePotential tablePotential, TablePotential jointProbability) {
-        double[] tablePotentialValues = tablePotential.values;
-        double[] jointProbabilityValues = jointProbability.values;
+        double[] tablePotentialValues = tablePotential.getValues();
+        double[] jointProbabilityValues = jointProbability.getValues();
 
         for (int i = 0; i < tablePotentialValues.length; ++i) {
             tablePotentialValues[i] += jointProbabilityValues[i];
