@@ -236,7 +236,7 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         }
 
         while (hasAnyPairAtDepth(stableDepth)) {
-            separationSetsLogic(stableDepth, onlyPositiveEdits);
+            separationSetsLogic(stableDepth);
             LearningEditProposal proposal = getOptimalEditFromCache(onlyAllowedEdits, onlyPositiveEdits);
             if (proposal != null) {
                 return proposal;
@@ -319,29 +319,29 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
      * @param adjacencySize     Size of the conditioning set to consider (= stableDepth)
      * @param onlyPositiveEdits If true, only positive edits are considered
      */
-    private void separationSetsLogic(int adjacencySize, boolean onlyPositiveEdits) {
+    private void separationSetsLogic(int adjacencySize) {
         for (Node nodeX : probNet.getNodes()) {
             for (Node nodeY : nodeX.getSiblings()) {
                 // PC-Stable: use the frozen snapshot for conditioning set candidates.
                 List<Node> snapshotNeighbors = stableAdjSnapshot.getOrDefault(nodeX, Collections.emptyList());
                 List<Node> adjacencySubset = new ArrayList<>(snapshotNeighbors);
                 adjacencySubset.remove(nodeY);
-                
+
                 RemoveLinkEdit removeLinkEdit = new RemoveLinkEdit(
                         probNet, nodeX.getVariable(), nodeY.getVariable(), false);
-                
+
                 if (!alreadyConsidered(removeLinkEdit, lastRemovedEdits)) {
                 	PCEditMotivation motivation = cache.get(new NodePair(nodeX, nodeY));
-                    
+
                     // Evaluate separation sets if not already cached or needs recalculation
                     if (motivation == null || (motivation.getScore() != ALREADY_DONE
                             && motivation.getSeparationSet().size() < adjacencySize)) {
-                        evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize, onlyPositiveEdits);
+                        evaluateSeparationSets(nodeX, nodeY, adjacencySubset, adjacencySize);
                     }
                 }
             }
         }
-        
+
     }
 
     /**
@@ -371,20 +371,21 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     
     /**
      * Evaluates separation sets for a given pair of nodes and updates the cache.
+     * Always caches the best separation set found regardless of the significance level;
+     * the onlyPositiveEdits filtering is applied later when displaying the table.
      *
      * @param nodeX the node x
      * @param nodeY the node y
      * @param adjacencySubset the adjacency subset
      * @param adjacencySize the adjacency size
-     * @param onlyPositiveEdits the only positive edits
      */
-    private void evaluateSeparationSets(Node nodeX, Node nodeY, List<Node> adjacencySubset, int adjacencySize, boolean onlyPositiveEdits) {
+    private void evaluateSeparationSets(Node nodeX, Node nodeY, List<Node> adjacencySubset, int adjacencySize) {
         double bestScore = 0.0;
         List<Node> bestScoreSeparationSet = null;
-        
+
         for (List<Node> separationSet : subSetsOfSize(adjacencySubset, adjacencySize)) {
             double linkScore = independenceTester.test(caseDatabase, nodeX, nodeY, separationSet);
-            if (linkScore > bestScore && (!onlyPositiveEdits || linkScore > significanceLevel)) {
+            if (linkScore > bestScore) {
                 bestScore = linkScore;
                 bestScoreSeparationSet = separationSet;
             }
