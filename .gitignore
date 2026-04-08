@@ -57,3 +57,4 @@ target/
 
 /.claude
 CLAUDE.md
+.jqwik-database
