@@ -986,11 +986,15 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         } else if (edit instanceof COrientLinksEdit) {
             phase = Phase.INITIAL_PHASE;
         } else if (edit instanceof OrientLinkEdit) {
-            phase = Phase.HEAD_TO_HEAD_ORIENTATION;
+            // Guard: when flattenEdit notifies sub-edits of a COrientLinksEdit, the compound
+            // handler above fires first and sets INITIAL_PHASE.  Sub-edits must not override that.
+            if (phase != Phase.INITIAL_PHASE) {
+                phase = Phase.HEAD_TO_HEAD_ORIENTATION;
+            }
         }
         resetHistory();
     }
-    
+
     @Override public void afterEditExecutes(@UnknownNullability PNEdit edit) {
         if (edit instanceof RemoveLinkEdit removeLinkEdit) {
             Node nodeX = probNet.getNode(removeLinkEdit.getVariableFrom());
@@ -1048,7 +1052,14 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
         } else if (edit instanceof OrientLinkEdit) {
             // After applying a remaining-link orientation, reset to REMAINING_LINKS_ORIENTATION.
             // Same peeking issue can advance the phase to ORIENTATION_FINISHED prematurely.
-            phase = Phase.REMAINING_LINKS_ORIENTATION;
+            //
+            // Guard: when flattenEdit notifies sub-edits of a COrientLinksEdit, the compound
+            // handler above fires first and sets HEAD_TO_HEAD_ORIENTATION.  The sub-edits
+            // (OrientLinkEdits) must NOT override that — they should only act on standalone
+            // orient edits from the remaining-links phase.
+            if (phase != Phase.HEAD_TO_HEAD_ORIENTATION) {
+                phase = Phase.REMAINING_LINKS_ORIENTATION;
+            }
         }
         resetHistory();
     }
