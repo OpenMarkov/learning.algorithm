@@ -225,7 +225,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 			}
 		}
 		if (bestEdit != null) {
-			bestEditProposal = new HillClimbingEditProposal(bestEdit, bestPartialScore);
+			bestEditProposal = LearningEditProposal.scored(bestEdit, bestPartialScore);
 			markEditAsConsidered(bestEdit);
 		}
 		return bestEditProposal;

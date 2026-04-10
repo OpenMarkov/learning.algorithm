@@ -72,7 +72,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
             }
         }
         if (bestEdit != null) {
-            bestEditProposal = new TreeAugmentedNBEditProposal(bestEdit, bestPartialScore);
+            bestEditProposal = LearningEditProposal.scored(bestEdit, bestPartialScore);
             markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;

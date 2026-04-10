@@ -119,7 +119,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         }
 
         if (bestEdit != null) {
-            bestEditProposal = new ForestAugmentedNBEditProposal(bestEdit, bestPartialScore);
+            bestEditProposal = LearningEditProposal.scored(bestEdit, bestPartialScore);
             markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;
