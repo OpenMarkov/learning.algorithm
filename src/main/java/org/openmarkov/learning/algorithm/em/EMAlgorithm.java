@@ -68,7 +68,8 @@ import java.util.concurrent.Callable;
  *      Algorithm on Wikipedia</a>
  */
 @Deprecated(since = "0.3.0", forRemoval = false) // EM loop is disabled (while(false)); not ready for production use
-@LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
+// By unchecking the following line, the EM Algorithm can be restored in the GUI.
+//@LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
 
     private static final Logger logger = LogManager.getLogger(EMAlgorithm.class);
