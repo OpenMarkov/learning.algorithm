@@ -26,6 +26,7 @@ import java.util.List;
  * Tests for the Expectation-Maximization algorithm
  */
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@SuppressWarnings("deprecation")
 public class EMAlgorithmTests {
 
 	private EMAlgorithm algorithm;

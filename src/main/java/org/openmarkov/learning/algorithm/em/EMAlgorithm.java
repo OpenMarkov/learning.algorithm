@@ -67,8 +67,7 @@ import java.util.concurrent.Callable;
  *      "https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">EM
  *      Algorithm on Wikipedia</a>
  */
-// TODO: This learning algorithm is disabled - needs completion before
-// production use
+@Deprecated(since = "0.3.0", forRemoval = false) // EM loop is disabled (while(false)); not ready for production use
 @LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
 
