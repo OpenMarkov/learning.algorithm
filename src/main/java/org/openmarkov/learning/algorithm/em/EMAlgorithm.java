@@ -7,6 +7,8 @@
 
 package org.openmarkov.learning.algorithm.em;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.exception.*;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -69,6 +71,8 @@ import java.util.concurrent.Callable;
 // production use
 @LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
+
+    private static final Logger logger = LogManager.getLogger(EMAlgorithm.class);
 
     private static final double EPSILON = 0.00001;
 
@@ -154,7 +158,7 @@ public class EMAlgorithm extends LearningAlgorithm {
                     throw new UnreachableException("EM: incompatible evidence in case " + i, e);
                 }
                 notNull++;
-                System.out.println(notNull + " from " + i);
+                logger.debug("EM E-step: processed case {} of {}", notNull, i);
                 for (Potential potential : potentials) {
                     TablePotential jointProbability = jointProbabilities.get(potential.getVariable(0));
                     if (expectedCountsMap.containsKey(potential)) {
@@ -165,7 +169,6 @@ public class EMAlgorithm extends LearningAlgorithm {
                 }
                 // accruedWeights.add (inferenceAlgorithm.getAccruedWeight ());
             }
-            // System.out.println(accruedWeights.toString ());
             // M-step
             for (TablePotential potential : potentials) {
                 Variable childVariable = potential.getVariables().get(0);
