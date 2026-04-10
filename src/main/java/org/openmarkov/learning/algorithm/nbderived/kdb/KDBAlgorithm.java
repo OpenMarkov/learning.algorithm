@@ -65,7 +65,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
                 (((BaseLinkEdit) edit).getVariableFrom()
-                                      .getName() == getRootNode().getName() ? unconditionedMetric : metric).getScore(edit)
+                                      .getName().equals(getRootNode().getName()) ? unconditionedMetric : metric).getScore(edit)
         );
     }
 
@@ -111,7 +111,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
             }
             
         } else {
-            domainFeatures.stream().filter(n -> n != xMaxWithPendingArcs.getVariable().getName()).forEach(df -> {
+            domainFeatures.stream().filter(n -> !n.equals(xMaxWithPendingArcs.getVariable().getName())).forEach(df -> {
                 AddLinkEdit addLink = new AddLinkEdit(probNet, probNet.getVariable(df), xMaxWithPendingArcs.getVariable(), true);
                 double addScore = metric.getScore(addLink);
                 

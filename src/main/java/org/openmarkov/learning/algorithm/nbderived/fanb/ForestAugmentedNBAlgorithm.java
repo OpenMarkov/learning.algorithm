@@ -55,7 +55,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
-                (((BaseLinkEdit) edit).getVariableFrom().getName() == getRootNode().getName() ?
+                (((BaseLinkEdit) edit).getVariableFrom().getName().equals(getRootNode().getName()) ?
                         unconditionedMetric : metric).getScore(edit)
         );
     }
