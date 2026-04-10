@@ -79,56 +79,57 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
     @Override
     protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
                                                   boolean onlyPositiveEdits) {
-        final double[] bestPartialScore = {currentAccuracy};
-        final BaseLinkEdit[] bestEdit = {null};
+        double bestPartialScore = currentAccuracy;
+        BaseLinkEdit bestEdit = null;
         LearningEditProposal bestEditProposal = null;
-        Node[] bestParent = {null};
-        
-        subtractListFromNonRootNode(superParents).forEach(nodeParent -> {
+        Node bestParent = null;
+
+        for (Node nodeParent : subtractListFromNonRootNode(superParents)) {
             AddLinkEdit addLink = new AddLinkEdit(probNet, getRootNode().getVariable(), nodeParent.getVariable(), true);
             double addScore = metric.getScore(addLink);
-            
+
             if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
                     && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
-                    && (addScore >= bestPartialScore[0] || !onlyPositiveEdits)
+                    && (addScore >= bestPartialScore || !onlyPositiveEdits)
             ) {
-                bestPartialScore[0] = addScore;
-                bestParent[0] = (nodeParent);
+                bestPartialScore = addScore;
+                bestParent = nodeParent;
             }
-        });
-        
-        if (bestParent[0] != null && !orphans.isEmpty() && !this.sameSP) {
-            superParents.add(bestParent[0]);
-            orphans.forEach(nodeChild -> {
-                AddLinkEdit addLink = new AddLinkEdit(probNet, bestParent[0].getVariable(), nodeChild.getVariable(), true);
+        }
+
+        if (bestParent != null && !orphans.isEmpty() && !this.sameSP) {
+            superParents.add(bestParent);
+            for (Node nodeChild : orphans) {
+                AddLinkEdit addLink = new AddLinkEdit(probNet, bestParent.getVariable(), nodeChild.getVariable(), true);
                 double addScore = metric.getScore(addLink);
-                
+
                 if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
                         && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
-                        && (addScore > bestPartialScore[0] || !onlyPositiveEdits)
+                        && (addScore > bestPartialScore || !onlyPositiveEdits)
                 ) {
-                    bestEdit[0] = addLink;
-                    bestPartialScore[0] = addScore;
+                    bestEdit = addLink;
+                    bestPartialScore = addScore;
                 }
-            });
+            }
         }
-        if (this.sameSP) {
+        if (this.sameSP && bestEdit != null) {
+            BaseLinkEdit editForSP = bestEdit;
             getNonRootNodes().stream()
-                             .filter(n -> !n.getName().equals(bestEdit[0].getVariableTo().getName()))
+                             .filter(n -> !n.getName().equals(editForSP.getVariableTo().getName()))
                              .map(Node::getVariable)
                              .forEach(v -> {
-                                 probNet.addLink(bestEdit[0].getVariableTo(), v, true);
+                                 probNet.addLink(editForSP.getVariableTo(), v, true);
                              });
-            bestEdit[0] = null;
+            bestEdit = null;
         }
-        
-        if (bestEdit[0] != null) {
-            bestEditProposal = new SuperParentNaiveBayesEditProposal(bestEdit[0], bestPartialScore[0]);
-            markEditAsConsidered(bestEdit[0]);
-            orphans.remove(probNet.getNode(bestEdit[0].getVariableTo()));
-            currentAccuracy = bestPartialScore[0];
+
+        if (bestEdit != null) {
+            bestEditProposal = new SuperParentNaiveBayesEditProposal(bestEdit, bestPartialScore);
+            markEditAsConsidered(bestEdit);
+            orphans.remove(probNet.getNode(bestEdit.getVariableTo()));
+            currentAccuracy = bestPartialScore;
         }
-        
+
         return bestEditProposal;
     }
     

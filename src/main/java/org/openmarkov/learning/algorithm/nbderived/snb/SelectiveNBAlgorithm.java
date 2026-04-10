@@ -59,38 +59,38 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
     @Override
     protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
                                                   boolean onlyPositiveEdits) {
-        final double[] bestPartialScore = {!onlyAllowedEdits && !onlyPositiveEdits ? 0.0 : currentAccuracy};
-        final BaseLinkEdit[] bestEdit = {null};
+        double bestPartialScore = !onlyAllowedEdits && !onlyPositiveEdits ? 0.0 : currentAccuracy;
+        BaseLinkEdit bestEdit = null;
         LearningEditProposal bestEditProposal = null;
         ((Accuracy) metric).resetCache();
-        
+
         Collection<Node> candidates = (!forward) ? getRootNode().getChildren() :
                 getNonRootNodes().stream()
                                  .filter(n -> !getRootNode().getChildren().contains(n))
                                  .collect(Collectors.toSet());
-        
-        candidates.forEach(n1 -> {
+
+        for (Node n1 : candidates) {
             BaseLinkEdit edit;
             if (forward) {
                 edit = new AddLinkEdit(probNet, getRootNode().getVariable(), n1.getVariable(), true);
             } else {
                 edit = new RemoveLinkEdit(probNet, getRootNode().getVariable(), n1.getVariable(), true);
             }
-            
+
             double addScore = metric.getScore(edit);
-            
+
             if (!isEditAlreadyConsidered(edit) && !isBlocked(edit)
                     && (!onlyAllowedEdits || isAllowed(edit))
-                    && (addScore >= bestPartialScore[0] || !onlyPositiveEdits)
+                    && (addScore >= bestPartialScore || !onlyPositiveEdits)
             ) {
-                bestEdit[0] = edit;
-                bestPartialScore[0] = addScore;
+                bestEdit = edit;
+                bestPartialScore = addScore;
             }
-        });
-        if (bestEdit[0] != null) {
-            bestEditProposal = new SelectiveNaiveBayesEditProposal(bestEdit[0], bestPartialScore[0]);
-            markEditAsConsidered(bestEdit[0]);
-            currentAccuracy = bestPartialScore[0];
+        }
+        if (bestEdit != null) {
+            bestEditProposal = new SelectiveNaiveBayesEditProposal(bestEdit, bestPartialScore);
+            markEditAsConsidered(bestEdit);
+            currentAccuracy = bestPartialScore;
         }
         return bestEditProposal;
     }

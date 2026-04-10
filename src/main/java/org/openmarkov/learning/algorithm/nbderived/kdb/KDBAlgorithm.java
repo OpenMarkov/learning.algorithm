@@ -97,38 +97,40 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     @Override
     protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
                                                   boolean onlyPositiveEdits) {
-        final double[] bestPartialScore = {Double.NEGATIVE_INFINITY};
-        final BaseLinkEdit[] bestEdit = {null};
+        double bestPartialScore = Double.NEGATIVE_INFINITY;
+        BaseLinkEdit bestEdit = null;
         LearningEditProposal bestEditProposal = null;
-        
+
         Node xMaxWithPendingArcs = getLastXMaxWithPendingArcs();
-        
+
         if (needToComputeXMax(xMaxWithPendingArcs)) {
-            bestEdit[0] = getNewXMaxFeatureEdit();
-            if (bestEdit[0] != null) {
-                bestPartialScore[0] = unconditionedMetric.getScore(bestEdit[0]);
-                domainFeatures.add(bestEdit[0].getVariableTo().getName());
+            bestEdit = getNewXMaxFeatureEdit();
+            if (bestEdit != null) {
+                bestPartialScore = unconditionedMetric.getScore(bestEdit);
+                domainFeatures.add(bestEdit.getVariableTo().getName());
             }
-            
+
         } else {
-            domainFeatures.stream().filter(n -> !n.equals(xMaxWithPendingArcs.getVariable().getName())).forEach(df -> {
+            for (String df : domainFeatures) {
+                if (df.equals(xMaxWithPendingArcs.getVariable().getName())) {
+                    continue;
+                }
                 AddLinkEdit addLink = new AddLinkEdit(probNet, probNet.getVariable(df), xMaxWithPendingArcs.getVariable(), true);
                 double addScore = metric.getScore(addLink);
-                
-                if ((addScore >= bestPartialScore[0]) && !isEditAlreadyConsidered(addLink)
+
+                if ((addScore >= bestPartialScore) && !isEditAlreadyConsidered(addLink)
                         && ((!onlyAllowedEdits || isAllowed(addLink))
                         && (!onlyPositiveEdits || addScore >= 0) && !isBlocked(addLink))
                 ) {
-                    bestEdit[0] = addLink;
-                    bestPartialScore[0] = addScore;
+                    bestEdit = addLink;
+                    bestPartialScore = addScore;
                 }
-                
-            });
+            }
         }
-        
-        if (bestEdit[0] != null) {
-            bestEditProposal = new KDBEditProposal(bestEdit[0], bestPartialScore[0]);
-            markEditAsConsidered(bestEdit[0]);
+
+        if (bestEdit != null) {
+            bestEditProposal = new KDBEditProposal(bestEdit, bestPartialScore);
+            markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;
     }
@@ -164,25 +166,25 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
      */
     private BaseLinkEdit getNewXMaxFeatureEdit() {
         
-        final Node[] xMax = {null};
-        final double[] maxScore = {0.0};
-        
+        Node xMax = null;
+        double maxScore = 0.0;
+
         if (getNonRootNodes().size() > domainFeatures.size()) {
-            getNonRootNodes().forEach(node -> {
+            for (Node node : getNonRootNodes()) {
                 if (!domainFeatures.contains(node.getVariable().getName())) {
                     double score = unconditionedMetric.getScore(new AddLinkEdit(probNet, this.getRootNode()
                                                                                              .getVariable(), node.getVariable(), true));
-                    
-                    if (score > maxScore[0]) {
-                        maxScore[0] = score;
-                        xMax[0] = node;
+
+                    if (score > maxScore) {
+                        maxScore = score;
+                        xMax = node;
                     }
                 }
-            });
+            }
         }
-        
-        return xMax[0] != null ?
-                new AddLinkEdit(probNet, this.getRootNode().getVariable(), xMax[0].getVariable(), true)
+
+        return xMax != null ?
+                new AddLinkEdit(probNet, this.getRootNode().getVariable(), xMax.getVariable(), true)
                 : null;
     }
     

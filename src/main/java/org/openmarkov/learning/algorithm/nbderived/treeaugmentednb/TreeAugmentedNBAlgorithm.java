@@ -49,28 +49,31 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     @Override
     protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
                                                   boolean onlyPositiveEdits) {
-        final double[] bestPartialScore = {Double.NEGATIVE_INFINITY};
-        final BaseLinkEdit[] bestEdit = {null};
+        double bestPartialScore = Double.NEGATIVE_INFINITY;
+        BaseLinkEdit bestEdit = null;
         LearningEditProposal bestEditProposal = null;
         List<Node> nodes = getNonRootNodes();
-        
-        nodes.forEach(n1 -> {
-            nodes.stream().filter(n -> n != n1).forEach(n2 -> {
+
+        for (Node n1 : nodes) {
+            for (Node n2 : nodes) {
+                if (n2 == n1) {
+                    continue;
+                }
                 AddLinkEdit addLink = new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true);
                 double addScore = metric.getScore(addLink);
-                
-                if (!isEditAlreadyConsidered(addLink) //&& addScore >= bestPartialScore[0]
+
+                if (!isEditAlreadyConsidered(addLink)
                         && ((!onlyAllowedEdits || isAllowed(addLink) && withinMaxWeightSpanningTree(n1.getVariable(), n2.getVariable()))
                         && (!onlyPositiveEdits || addScore > 0) && !isBlocked(addLink))
                 ) {
-                    bestEdit[0] = addLink;
-                    bestPartialScore[0] = addScore;
+                    bestEdit = addLink;
+                    bestPartialScore = addScore;
                 }
-            });
-        });
-        if (bestEdit[0] != null) {
-            bestEditProposal = new TreeAugmentedNBEditProposal(bestEdit[0], bestPartialScore[0]);
-            markEditAsConsidered(bestEdit[0]);
+            }
+        }
+        if (bestEdit != null) {
+            bestEditProposal = new TreeAugmentedNBEditProposal(bestEdit, bestPartialScore);
+            markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;
     }

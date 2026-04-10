@@ -88,36 +88,39 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     @Override
     protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
                                                   boolean onlyPositiveEdits) {
-        final double[] bestPartialScore = {Double.NEGATIVE_INFINITY};
-        final BaseLinkEdit[] bestEdit = {null};
+        double bestPartialScore = Double.NEGATIVE_INFINITY;
+        BaseLinkEdit bestEdit = null;
         LearningEditProposal bestEditProposal = null;
         List<Node> nodes = getNonRootNodes();
-        
+
         if (subtreeRoot == null) {
-            bestEdit[0] = getBestRootForSubtree();
-            subtreeRoot = probNet.getNode(bestEdit[0].getVariableTo());
+            bestEdit = getBestRootForSubtree();
+            subtreeRoot = probNet.getNode(bestEdit.getVariableTo());
             directedMaxWeightSpanningTree = redirectMaximumWeightSpanningTree(subtreeRoot.getVariable());
-            bestPartialScore[0] = unconditionedMetric.getScore(bestEdit[0]);
+            bestPartialScore = unconditionedMetric.getScore(bestEdit);
         } else {
-            nodes.forEach(n1 -> {
-                nodes.stream().filter(n -> n != n1 && n != subtreeRoot).forEach(n2 -> {
+            for (Node n1 : nodes) {
+                for (Node n2 : nodes) {
+                    if (n2 == n1 || n2 == subtreeRoot) {
+                        continue;
+                    }
                     AddLinkEdit addLink = new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true);
                     double addScore = metric.getScore(addLink);
-                    
-                    if ((addScore >= bestPartialScore[0]) && (addScore > avgCMI) && !isEditAlreadyConsidered(addLink)
+
+                    if ((addScore >= bestPartialScore) && (addScore > avgCMI) && !isEditAlreadyConsidered(addLink)
                             && ((!onlyAllowedEdits || isAllowed(addLink) && withinMaxWeightSpanningTree(n1.getVariable(), n2.getVariable()))
                             && (!onlyPositiveEdits || addScore > 0) && !isBlocked(addLink))
                     ) {
-                        bestEdit[0] = addLink;
-                        bestPartialScore[0] = addScore;
+                        bestEdit = addLink;
+                        bestPartialScore = addScore;
                     }
-                });
-            });
+                }
+            }
         }
-        
-        if (bestEdit[0] != null) {
-            bestEditProposal = new ForestAugmentedNBEditProposal(bestEdit[0], bestPartialScore[0]);
-            markEditAsConsidered(bestEdit[0]);
+
+        if (bestEdit != null) {
+            bestEditProposal = new ForestAugmentedNBEditProposal(bestEdit, bestPartialScore);
+            markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;
     }
@@ -129,32 +132,31 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * @return averaged conditional mutual information
      */
     protected Double computeAveragedConditionalMutualInformation() {
-        final double[] score = {0.0};
+        double score = 0.0;
         List<Node> nonRootNodes = getNonRootNodes();
         int nodesSize = nonRootNodes.size();
-        nonRootNodes.forEach(n1 -> {
-            nonRootNodes.forEach(n2 -> {
-                score[0] += metric.getScore(new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true));
-            });
-        });
-        
-        return (score[0] / (nodesSize * (nodesSize - 1)));
+        for (Node n1 : nonRootNodes) {
+            for (Node n2 : nonRootNodes) {
+                score += metric.getScore(new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true));
+            }
+        }
+
+        return (score / (nodesSize * (nodesSize - 1)));
     }
     
     
     protected BaseLinkEdit getBestRootForSubtree() {
-        final BaseLinkEdit[] edit = {null};
-        final double[] score = {0.0};
-        getNonRootNodes().forEach(n1 -> {
-            
+        BaseLinkEdit bestEdit = null;
+        double bestScore = 0.0;
+        for (Node n1 : getNonRootNodes()) {
             BaseLinkEdit ble = new AddLinkEdit(probNet, getRootNode().getVariable(), n1.getVariable(), true);
             double addScore = unconditionedMetric.getScore(ble);
-            if (addScore > score[0]) {
-                edit[0] = ble;
-                score[0] = addScore;
+            if (addScore > bestScore) {
+                bestEdit = ble;
+                bestScore = addScore;
             }
-        });
-        return edit[0];
+        }
+        return bestEdit;
     }
     
 }
