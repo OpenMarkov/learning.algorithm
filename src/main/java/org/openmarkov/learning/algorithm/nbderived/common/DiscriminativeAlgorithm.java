@@ -213,7 +213,7 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
      * @return a random non-root variable
      */
     protected Variable getRandomVariable(){
-        return getNonRootVariables().get(new Random().nextInt(getNonRootVariables().size()-1));
+        return getNonRootVariables().get(new Random().nextInt(getNonRootVariables().size()));
     }
 
     @Override
