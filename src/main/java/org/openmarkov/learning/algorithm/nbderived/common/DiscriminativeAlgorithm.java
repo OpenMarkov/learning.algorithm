@@ -1,5 +1,6 @@
 package org.openmarkov.learning.algorithm.nbderived.common;
 
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -9,6 +10,9 @@ import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.learning.algorithm.naivebayes.IDiscriminativeBayes;
 import org.openmarkov.learning.algorithm.scoreAndSearch.ScoreAndSearchAlgorithm;
+import org.openmarkov.learning.core.util.LearningEditMotivation;
+import org.openmarkov.learning.core.util.LearningEditProposal;
+import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.Metric;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,6 +83,33 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
     protected void resetHistory() {
         editHistory.reset();
     }
+
+
+    @Override
+    public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        resetHistory();
+        return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
+    }
+
+    @Override
+    public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
+        return getOptimalEdit(onlyAllowedEdits, onlyPositiveEdits);
+    }
+
+    @Override
+    public LearningEditMotivation getMotivation(PNEdit edit) {
+        return new ScoreEditMotivation(metric.getScore(edit));
+    }
+
+    /**
+     * Subclass hook: returns the single best edit for the current search step.
+     *
+     * @param onlyAllowedEdits  if true, only constraint-satisfying edits are considered
+     * @param onlyPositiveEdits if true, only edits with positive score are considered
+     * @return the best edit proposal, or null if none is available
+     */
+    protected abstract LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
+                                                           boolean onlyPositiveEdits);
 
 
     /**

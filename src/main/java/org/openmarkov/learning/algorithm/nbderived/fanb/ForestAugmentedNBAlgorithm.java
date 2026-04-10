@@ -53,43 +53,13 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     }
     
     
-    /**
-     * This method returns the best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        resetHistory();
-        return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
-    }
-
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
                 (((BaseLinkEdit) edit).getVariableFrom().getName() == getRootNode().getName() ?
                         unconditionedMetric : metric).getScore(edit)
         );
     }
-    
-    
-    /**
-     * This method returns the next best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
+
     @Override public void init(ModelNetUse modelNetUse) {
         kDependence = 1;
         if (metric instanceof MutualInformationMetric miMetric) {
@@ -115,8 +85,9 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * @param learnedNet net to learn.
      * @return {@code PNEdit} edit with the highest associated score.
      */
-    private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
-                                                boolean onlyPositiveEdits) {
+    @Override
+    protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
+                                                  boolean onlyPositiveEdits) {
         final double[] bestPartialScore = {Double.NEGATIVE_INFINITY};
         final BaseLinkEdit[] bestEdit = {null};
         LearningEditProposal bestEditProposal = null;
@@ -130,7 +101,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         } else {
             nodes.forEach(n1 -> {
                 nodes.stream().filter(n -> n != n1 && n != subtreeRoot).forEach(n2 -> {
-                    AddLinkEdit addLink = new AddLinkEdit(learnedNet, n1.getVariable(), n2.getVariable(), true);
+                    AddLinkEdit addLink = new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true);
                     double addScore = metric.getScore(addLink);
                     
                     if ((addScore >= bestPartialScore[0]) && (addScore > avgCMI) && !isEditAlreadyConsidered(addLink)

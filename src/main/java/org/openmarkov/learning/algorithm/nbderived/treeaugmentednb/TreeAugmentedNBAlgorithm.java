@@ -1,6 +1,5 @@
 package org.openmarkov.learning.algorithm.nbderived.treeaugmentednb;
 
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -10,10 +9,8 @@ import org.openmarkov.core.model.network.constraint.MaxNumParents;
 import org.openmarkov.core.model.network.constraint.NoCycle;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
-import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
-import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
@@ -27,40 +24,6 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         super(probNet, caseDatabase, metric, alpha);
     }
     
-    
-    /**
-     * This method returns the best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        resetHistory();
-        return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
-    @Override public LearningEditMotivation getMotivation(PNEdit edit) {
-        return new ScoreEditMotivation(metric.getScore(edit));
-    }
-    
-    
-    /**
-     * This method returns the next best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
-    }
     
     @Override public void init(ModelNetUse modelNetUse) {
         if (metric instanceof MutualInformationMetric) {
@@ -83,8 +46,9 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
      * @param learnedNet net to learn.
      * @return {@code PNEdit} edit with the highest associated score.
      */
-    private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
-                                                boolean onlyPositiveEdits) {
+    @Override
+    protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
+                                                  boolean onlyPositiveEdits) {
         final double[] bestPartialScore = {Double.NEGATIVE_INFINITY};
         final BaseLinkEdit[] bestEdit = {null};
         LearningEditProposal bestEditProposal = null;
@@ -92,7 +56,7 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         
         nodes.forEach(n1 -> {
             nodes.stream().filter(n -> n != n1).forEach(n2 -> {
-                AddLinkEdit addLink = new AddLinkEdit(learnedNet, n1.getVariable(), n2.getVariable(), true);
+                AddLinkEdit addLink = new AddLinkEdit(probNet, n1.getVariable(), n2.getVariable(), true);
                 double addScore = metric.getScore(addLink);
                 
                 if (!isEditAlreadyConsidered(addLink) //&& addScore >= bestPartialScore[0]

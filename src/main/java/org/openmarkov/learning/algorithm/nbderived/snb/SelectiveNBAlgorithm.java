@@ -1,6 +1,5 @@
 package org.openmarkov.learning.algorithm.nbderived.snb;
 
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
@@ -11,10 +10,8 @@ import org.openmarkov.core.model.network.constraint.MaxNumParents;
 import org.openmarkov.core.model.network.constraint.NoCycle;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
-import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
-import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
@@ -40,40 +37,6 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
     }
     
     
-    /**
-     * This method returns the best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        resetHistory();
-        return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
-    @Override public LearningEditMotivation getMotivation(PNEdit edit) {
-        return new ScoreEditMotivation(metric.getScore(edit));
-    }
-    
-    
-    /**
-     * This method returns the next best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
     @Override public void init(ModelNetUse modelNetUse) {
         if (metric instanceof Accuracy) {
             ((Accuracy) metric).setClassVariable(this.classVariableName);
@@ -93,8 +56,9 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
      * @param learnedNet net to learn.
      * @return {@code PNEdit} edit with the highest associated score.
      */
-    private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
-                                                boolean onlyPositiveEdits) {
+    @Override
+    protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
+                                                  boolean onlyPositiveEdits) {
         final double[] bestPartialScore = {!onlyAllowedEdits && !onlyPositiveEdits ? 0.0 : currentAccuracy};
         final BaseLinkEdit[] bestEdit = {null};
         LearningEditProposal bestEditProposal = null;
@@ -108,9 +72,9 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
         candidates.forEach(n1 -> {
             BaseLinkEdit edit;
             if (forward) {
-                edit = new AddLinkEdit(learnedNet, getRootNode().getVariable(), n1.getVariable(), true);
+                edit = new AddLinkEdit(probNet, getRootNode().getVariable(), n1.getVariable(), true);
             } else {
-                edit = new RemoveLinkEdit(learnedNet, getRootNode().getVariable(), n1.getVariable(), true);
+                edit = new RemoveLinkEdit(probNet, getRootNode().getVariable(), n1.getVariable(), true);
             }
             
             double addScore = metric.getScore(edit);

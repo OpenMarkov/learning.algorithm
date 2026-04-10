@@ -1,6 +1,5 @@
 package org.openmarkov.learning.algorithm.nbderived.spnb;
 
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -10,10 +9,8 @@ import org.openmarkov.core.model.network.constraint.DistinctLinks;
 import org.openmarkov.core.model.network.constraint.MaxNumParents;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
-import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
-import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
@@ -55,40 +52,6 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
     }
     
     
-    /**
-     * This method returns the best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        resetHistory();
-        return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
-    @Override public LearningEditMotivation getMotivation(PNEdit edit) {
-        return new ScoreEditMotivation(metric.getScore(edit));
-    }
-    
-    
-    /**
-     * This method returns the next best edit (and its associated score)
-     * that can be done to the network that is being learnt.
-     *
-     * @param onlyAllowedEdits  If this parameter is true, only those edits
-     *                          that do not provoke a ConstraintViolatedException are returned
-     * @param onlyPositiveEdits If this parameter is true, only those
-     *                          edits with a positive associated score are returned.
-     * @return {@code LearningEditProposal} with the best edit and its score.
-     */
-    @Override public LearningEditProposal getNextEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
-        return getOptimalEdit(probNet, onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
     @Override public void init(ModelNetUse modelNetUse) {
         if (metric instanceof Accuracy) {
             ((Accuracy) metric).setClassVariable(this.classVariableName);
@@ -113,15 +76,16 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
      * @param learnedNet net to learn.
      * @return {@code PNEdit} edit with the highest associated score.
      */
-    private LearningEditProposal getOptimalEdit(ProbNet learnedNet, boolean onlyAllowedEdits,
-                                                boolean onlyPositiveEdits) {
+    @Override
+    protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
+                                                  boolean onlyPositiveEdits) {
         final double[] bestPartialScore = {currentAccuracy};
         final BaseLinkEdit[] bestEdit = {null};
         LearningEditProposal bestEditProposal = null;
         Node[] bestParent = {null};
         
         subtractListFromNonRootNode(superParents).forEach(nodeParent -> {
-            AddLinkEdit addLink = new AddLinkEdit(learnedNet, getRootNode().getVariable(), nodeParent.getVariable(), true);
+            AddLinkEdit addLink = new AddLinkEdit(probNet, getRootNode().getVariable(), nodeParent.getVariable(), true);
             double addScore = metric.getScore(addLink);
             
             if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
@@ -136,7 +100,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         if (bestParent[0] != null && !orphans.isEmpty() && !this.sameSP) {
             superParents.add(bestParent[0]);
             orphans.forEach(nodeChild -> {
-                AddLinkEdit addLink = new AddLinkEdit(learnedNet, bestParent[0].getVariable(), nodeChild.getVariable(), true);
+                AddLinkEdit addLink = new AddLinkEdit(probNet, bestParent[0].getVariable(), nodeChild.getVariable(), true);
                 double addScore = metric.getScore(addLink);
                 
                 if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
