@@ -4,7 +4,6 @@ import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
-import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithm;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
@@ -70,13 +69,4 @@ public class NaiveBayesAlgorithm extends LearningAlgorithm implements IDiscrimin
                            .collect(Collectors.toList());
     }
     
-    @Override
-    public Variable getRootVariable() {
-        return null;
-    }
-    
-    @Override
-    public List<Variable> getNonRootVariables() {
-        return null;
-    }
 }

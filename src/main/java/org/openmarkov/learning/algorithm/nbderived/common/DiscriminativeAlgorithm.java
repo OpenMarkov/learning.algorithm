@@ -226,16 +226,6 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
         return  this.probNet.getNodes().stream().filter(n-> !n.getVariable().getName().equals(classVariableName)).collect(Collectors.toList());
     }
 
-    @Override
-    public List<Variable> getNonRootVariables(){
-        return this.getNonRootNodes().stream().map(Node::getVariable).collect(Collectors.toList());
-    }
-
-
-    @Override
-    public Variable getRootVariable(){
-        return getRootNode().getVariable();
-    }
 
 
 

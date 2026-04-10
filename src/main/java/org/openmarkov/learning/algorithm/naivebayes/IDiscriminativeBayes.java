@@ -32,12 +32,16 @@ public interface IDiscriminativeBayes {
      *
      * @return the root variable
      */
-    Variable getRootVariable();
+    default Variable getRootVariable() {
+        return getRootNode().getVariable();
+    }
 
     /**
      * Returns the list of variables that have not been selected as root of NB
      * @return List of variables
      */
-    List<Variable> getNonRootVariables();
+    default List<Variable> getNonRootVariables() {
+        return getNonRootNodes().stream().map(Node::getVariable).toList();
+    }
 
 }
