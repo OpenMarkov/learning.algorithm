@@ -17,7 +17,6 @@ import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,12 +37,6 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
      */
     
     
-    /**
-     * List with the best edits that have not been done by the
-     * algorithm because they violate the ModelNetworkConstraint
-     */
-    protected List<PNEdit> lastBestEdits;
-    
     private LinkedList<Node> superParents;
     
     private LinkedList<Node> orphans;
@@ -54,7 +47,6 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
     
     public SuperParentNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
-        this.lastBestEdits = new ArrayList<PNEdit>();
     }
     
     public SuperParentNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha, boolean sp) {
@@ -77,29 +69,6 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         resetHistory();
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
     }
-    
-    /**
-     * Store last best edit
-     *
-     * @param edit the edit
-     */
-    protected void markEditAsConsidered(BaseLinkEdit edit) {
-        this.lastBestEdits.add(edit);
-    }
-    
-    /**
-     * @param edit the edit
-     * @return true if it is an edit already considered
-     */
-    protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
-        return this.lastBestEdits.contains(edit);
-    }
-    
-    
-    protected void resetHistory() {
-        this.lastBestEdits.clear();
-    }
-    
     
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(metric.getScore(edit));

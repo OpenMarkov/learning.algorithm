@@ -17,7 +17,6 @@ import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -37,18 +36,6 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     
     /**
-     * Maximum Weight Spanning Tree from Chow-Liu's algorithm
-     */
-    protected List<BaseLinkEdit> maximumWeightSpanningTree = new ArrayList<>();
-    
-    /**
-     * List with the best edits that have been not been done by the
-     * algorithm because they violate the ModelNetworkConstraint
-     */
-    protected List<PNEdit> lastBestEdits;
-    
-    
-    /**
      * Threshold to filter class conditioned links between nodes
      */
     protected Double avgCMI;
@@ -61,7 +48,6 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
     
     public ForestAugmentedNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Metric unconditioned, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
-        this.lastBestEdits = new ArrayList<PNEdit>();
         this.unconditionedMetric = unconditioned;
         this.unconditionedMetric.init(probNet, caseDatabase);
     }
@@ -81,13 +67,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         resetHistory();
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
     }
-    
-    
-    protected void resetHistory() {
-        lastBestEdits.clear();
-    }
-    
-    
+
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(
                 (((BaseLinkEdit) edit).getVariableFrom().getName() == getRootNode().getName() ?
@@ -126,24 +106,6 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         MaxNumParents maxNumParentsConstraint = new MaxNumParents(kDependence + 1);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
-    }
-    
-    
-    /**
-     * Store last best edit
-     *
-     * @param edit the edit
-     */
-    protected void markEditAsConsidered(BaseLinkEdit edit) {
-        lastBestEdits.add(edit);
-    }
-    
-    /**
-     * @param edit the edit
-     * @return true if it is an edit already considered
-     */
-    protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
-        return lastBestEdits.contains(edit);
     }
     
     

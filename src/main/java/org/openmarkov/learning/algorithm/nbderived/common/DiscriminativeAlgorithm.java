@@ -1,6 +1,5 @@
 package org.openmarkov.learning.algorithm.nbderived.common;
 
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -30,10 +29,10 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
     protected List<BaseLinkEdit> directedMaxWeightSpanningTree = new ArrayList<>();
 
     /**
-     * List with the best edits that have been not been done by the
-     * algorithm because they violate the ModelNetworkConstraint
+     * Manages the history of edits already considered in the current search cycle,
+     * preventing the algorithm from re-proposing the same edit.
      */
-    protected List<PNEdit> lastBestEdits;
+    protected final EditHistorySupport editHistory = new EditHistorySupport(new ArrayList<>());
 
     /**
      * Metric used to compute the Conditional Mutual Information for each pair of nodes conditioned to the class variable
@@ -52,7 +51,33 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
      */
     public DiscriminativeAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
-        this.lastBestEdits = new ArrayList<PNEdit>();
+    }
+
+
+    /**
+     * Marks the given edit as already considered in the current search cycle.
+     *
+     * @param edit the edit to mark
+     */
+    protected void markEditAsConsidered(BaseLinkEdit edit) {
+        editHistory.markEditAsConsidered(edit);
+    }
+
+    /**
+     * Checks whether the given edit has already been considered in the current search cycle.
+     *
+     * @param edit the edit to check
+     * @return true if this edit was previously marked as considered
+     */
+    protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
+        return editHistory.isEditAlreadyConsidered(edit);
+    }
+
+    /**
+     * Clears all recorded edit history, starting a fresh search cycle.
+     */
+    protected void resetHistory() {
+        editHistory.reset();
     }
 
 

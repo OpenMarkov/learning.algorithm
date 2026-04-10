@@ -17,7 +17,6 @@ import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -42,11 +41,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     
     
     /**
-     * List with the best edits that have been not been done by the
-     * algorithm because they violate the ModelNetworkConstraint
-     */
-    protected List<PNEdit> lastBestEdits;
-    /**
      * Maximum allowable degree of feature dependence
      */
     private int kDependence;
@@ -58,7 +52,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     
     public KDBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Metric unconditioned, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
-        this.lastBestEdits = new ArrayList<PNEdit>();
         unconditionedMetric = unconditioned;
         unconditionedMetric.init(probNet, caseDatabase);
     }
@@ -82,11 +75,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
     @Override public LearningEditProposal getBestEdit(boolean onlyAllowedEdits, boolean onlyPositiveEdits) {
         resetHistory();
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
-    }
-    
-    
-    protected void resetHistory() {
-        lastBestEdits.clear();
     }
     
     
@@ -125,24 +113,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
-    
-    /**
-     * Store last best edit
-     *
-     * @param edit the edit
-     */
-    protected void markEditAsConsidered(BaseLinkEdit edit) {
-        lastBestEdits.add(edit);
-    }
-    
-    /**
-     * @param edit the edit
-     * @return true if it is an edit already considered
-     */
-    protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
-        return lastBestEdits.contains(edit);
-    }
-    
     
     @Override
     protected void buildMaximumWeightSpanningTree() {

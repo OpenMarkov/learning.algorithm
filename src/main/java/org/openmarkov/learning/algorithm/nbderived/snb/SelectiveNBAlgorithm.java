@@ -18,7 +18,6 @@ import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,19 +26,12 @@ import java.util.stream.Collectors;
 @LearningAlgorithmType(name = "Selective naive bayes", discriminative = true, supportsUnobservedVariables = false)
 public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
     
-    /**
-     * List with the best edits that have not been done by the
-     * algorithm because they violate the ModelNetworkConstraint
-     */
-    protected List<PNEdit> lastBestEdits;
-    
     private double currentAccuracy = 0.0;
-    
+
     private boolean forward;
-    
+
     public SelectiveNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
-        this.lastBestEdits = new ArrayList<PNEdit>();
     }
     
     public SelectiveNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha, boolean fwd) {
@@ -62,29 +54,6 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
         resetHistory();
         return getNextEdit(onlyAllowedEdits, onlyPositiveEdits);
     }
-    
-    /**
-     * Store last best edit
-     *
-     * @param edit the edit
-     */
-    protected void markEditAsConsidered(BaseLinkEdit edit) {
-        this.lastBestEdits.add(edit);
-    }
-    
-    /**
-     * @param edit the edit
-     * @return true if it is an edit already considered
-     */
-    protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
-        return lastBestEdits.contains(edit);
-    }
-    
-    
-    protected void resetHistory() {
-        lastBestEdits.clear();
-    }
-    
     
     @Override public LearningEditMotivation getMotivation(PNEdit edit) {
         return new ScoreEditMotivation(metric.getScore(edit));
