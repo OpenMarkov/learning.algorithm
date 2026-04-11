@@ -248,9 +248,16 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
             motivation = cache.get(new NodePair(nodeX, nodeY));
 
         } else if (edit instanceof COrientLinksEdit compoundDirectLinkEdit) {
-            nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariableFrom());
-            nodeZ = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)).getVariableTo());
-            nodeY = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)).getVariableFrom());
+            nodeX = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                            .findFirst()
+                                                                            .get()).getVariableFrom());
+            nodeZ = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                            .findFirst()
+                                                                            .get()).getVariableTo());
+            nodeY = probNet.getNode(((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                            .skip(1)
+                                                                            .findFirst()
+                                                                            .get()).getVariableFrom());
             motivation = new StringEditMotivation(
                     "Sep. set (" + nodeX.getName() + ", " + nodeY.getName() + ") does not contain variable: "
                             + nodeZ.getName());

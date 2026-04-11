@@ -177,14 +177,20 @@ class ColliderOrientation {
     private boolean alreadyConsidered(OrientLinkEdit edit1, OrientLinkEdit edit2) {
         boolean result = false;
         for (COrientLinksEdit compoundDirectLinkEdit : lastCompoundOrientationEdits) {
-            result |= (
-                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)) == 0) && (
-                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)) == 0
+            result = result || (
+                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().findFirst().get()) == 0) && (
+                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                                   .skip(1)
+                                                                                   .findFirst()
+                                                                                   .get()) == 0
                     )
             );
-            result |= (
-                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)) == 0) && (
-                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)) == 0
+            result = result || (
+                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                            .skip(1)
+                                                                            .findFirst()
+                                                                            .get()) == 0) && (
+                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().findFirst().get()) == 0
                     )
             );
         }
