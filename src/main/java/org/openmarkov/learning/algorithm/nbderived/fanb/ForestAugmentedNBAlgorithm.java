@@ -21,7 +21,8 @@ import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMet
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true, supportsUnobservedVariables = false,
+		metrics = {"ConditionalMutualInformation", "MutualInformation"})
 public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
 
     private final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();

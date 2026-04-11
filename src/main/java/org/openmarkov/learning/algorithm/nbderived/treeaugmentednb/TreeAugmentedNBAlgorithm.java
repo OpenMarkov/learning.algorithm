@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.Random;
 
 
-@LearningAlgorithmType(name = "Tree augmented naive bayes", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "Tree augmented naive bayes", discriminative = true, supportsUnobservedVariables = false,
+		metrics = "ConditionalMutualInformation")
 public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
 
     private final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
