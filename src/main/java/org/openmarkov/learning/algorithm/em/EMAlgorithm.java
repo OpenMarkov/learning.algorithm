@@ -39,26 +39,19 @@ import java.util.concurrent.Callable;
  * Implements the Expectation-Maximization (EM) parametric learning algorithm
  * for Bayesian networks with latent (unobserved) variables.
  * <p>
- * <b>Current Status:</b> This algorithm is currently DISABLED and under
- * development.
- * Only parametric learning is implemented; structural EM may be added in the
- * future.
- * <p>
- * <b>Algorithm Overview:</b>
  * The EM algorithm iteratively performs two steps:
  * <ul>
  * <li><b>E-step (Expectation):</b> Calculate expected sufficient statistics
- * given current parameters and observed data</li>
+ * given current parameters and observed data, using Hugin propagation</li>
  * <li><b>M-step (Maximization):</b> Update parameters to maximize the
  * expected log-likelihood</li>
  * </ul>
  * <p>
- * <b>Known Issues:</b>
- * <ul>
- * <li>The alpha parameter is not currently utilized (see constructor TODO)</li>
- * <li>Structural learning is not implemented</li>
- * <li>The algorithm loop is disabled (line 146: {@code while (false)})</li>
- * </ul>
+ * Convergence: the loop runs until the log-likelihood improvement falls below
+ * {@link #EPSILON} or {@link #MAX_ITERATIONS} is reached.
+ * <p>
+ * Only parametric learning is implemented; structural EM ({@code getBestEdit},
+ * {@code getNextEdit}) returns null.
  *
  * @author Iñigo
  * @version 0.3.0-SNAPSHOT
@@ -67,14 +60,13 @@ import java.util.concurrent.Callable;
  *      "https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">EM
  *      Algorithm on Wikipedia</a>
  */
-@Deprecated(since = "0.3.0", forRemoval = false) // EM loop is disabled (while(false)); not ready for production use
-// By unchecking the following line, the EM Algorithm can be restored in the GUI.
-//@LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
+@LearningAlgorithmType(name = "Expectation maximization (EM)", discriminative = false, supportsUnobservedVariables = true)
 public class EMAlgorithm extends LearningAlgorithm {
 
     private static final Logger logger = LogManager.getLogger(EMAlgorithm.class);
 
     private static final double EPSILON = 0.00001;
+    private static final int MAX_ITERATIONS = 100;
 
     /**
      * Constructs an EM learning algorithm instance.
@@ -131,24 +123,26 @@ public class EMAlgorithm extends LearningAlgorithm {
             expertKnowledge.put(potential, new TablePotential(potential));
         }
 
-        HuginPropagation inferenceAlgorithm;
-        try {
-            inferenceAlgorithm = new HuginPropagation(expandedNet);
-        } catch (ConstraintViolatedException e) {
-            throw new UnreachableException("EM: expanded network violates constraints", e);
-        }
-        inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
         double lastLogLikelihood = Double.NEGATIVE_INFINITY;
-        double currentLogLikelihood;
-
+        double currentLogLikelihood = Double.NEGATIVE_INFINITY;
+        boolean converged = false;
         int iterations = 0;
-        do {
-            HashMap<Potential, TablePotential> expectedCountsMap = new HashMap<Potential, TablePotential>();
 
-            // E-step
-            // For each case in the database
-            int notNull = 0;
-            // List<Double> accruedWeights = new ArrayList<> (cases.length);
+        do {
+            // Re-create inference algorithm each iteration because ClusterPropagation
+            // copies the network internally; M-step changes to potentials would not
+            // be visible otherwise.
+            HuginPropagation inferenceAlgorithm;
+            try {
+                inferenceAlgorithm = new HuginPropagation(expandedNet);
+            } catch (ConstraintViolatedException e) {
+                throw new UnreachableException("EM: expanded network violates constraints at iteration " + iterations, e);
+            }
+            inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
+
+            HashMap<Potential, TablePotential> expectedCountsMap = new HashMap<>();
+
+            // E-step: compute expected sufficient statistics for each case
             for (int i = 0; i < cases.length; ++i) {
                 Map<Variable, TablePotential> jointProbabilities;
                 try {
@@ -157,8 +151,6 @@ public class EMAlgorithm extends LearningAlgorithm {
                 } catch (IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther e) {
                     throw new UnreachableException("EM: incompatible evidence in case " + i, e);
                 }
-                notNull++;
-                logger.debug("EM E-step: processed case {} of {}", notNull, i);
                 for (Potential potential : potentials) {
                     TablePotential jointProbability = jointProbabilities.get(potential.getVariable(0));
                     if (expectedCountsMap.containsKey(potential)) {
@@ -167,9 +159,9 @@ public class EMAlgorithm extends LearningAlgorithm {
                         expectedCountsMap.put(potential, jointProbability);
                     }
                 }
-                // accruedWeights.add (inferenceAlgorithm.getAccruedWeight ());
             }
-            // M-step
+
+            // M-step: update parameters to maximize expected log-likelihood
             for (TablePotential potential : potentials) {
                 Variable childVariable = potential.getVariables().get(0);
                 int childNumStates = childVariable.getNumStates();
@@ -178,19 +170,19 @@ public class EMAlgorithm extends LearningAlgorithm {
                 double[] expectedCounts = expectedCountsMap.get(potential).getValues();
                 double[] expectedCountsParents = new double[expectedCounts.length / childNumStates];
 
-                // Marginalize child variable: M[x,u]-> M[u]
+                // Marginalize child variable: M[x,u] -> M[u]
                 for (int i = 0; i < expectedCounts.length; ++i) {
                     expectedCountsParents[i / childNumStates] += expectedCounts[i];
                 }
 
-                // Calculate new theta (as seen on madsen2003)
+                // Calculate new theta (Madsen 2003)
                 for (int i = 0; i < theta.length; ++i) {
                     theta[i] = (expectedCounts[i] + alpha * p_ijk[i])
                             / (expectedCountsParents[i / childNumStates] + alpha);
                 }
             }
 
-            // Calculate new log likelihood
+            // Compute log-likelihood
             currentLogLikelihood = 0.0;
             for (TablePotential potential : potentials) {
                 TablePotential expectedCounts = expectedCountsMap.get(potential);
@@ -200,11 +192,17 @@ public class EMAlgorithm extends LearningAlgorithm {
                         currentLogLikelihood += expectedCounts.getValues()[i] * Math.log(theta[i]);
                     }
                 }
-
             }
-            ++iterations;
 
-        } while (false);// iterations < 100 && (currentLogLikelihood - lastLogLikelihood) > EPSILON);
+            converged = (currentLogLikelihood - lastLogLikelihood) <= EPSILON;
+            lastLogLikelihood = currentLogLikelihood;
+            ++iterations;
+            logger.debug("EM iteration {}: log-likelihood = {}", iterations, currentLogLikelihood);
+
+        } while (!converged && iterations < MAX_ITERATIONS);
+
+        logger.info("EM finished after {} iterations (converged={}, logLikelihood={})",
+                iterations, converged, currentLogLikelihood);
 
         for (ICIPotential iciPotential : iciSubpotentials.keySet()) {
             iciPotential.setNoisyPotentials(iciSubpotentials.get(iciPotential));
