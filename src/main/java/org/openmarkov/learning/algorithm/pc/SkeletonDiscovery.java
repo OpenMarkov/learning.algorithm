@@ -128,7 +128,7 @@ class SkeletonDiscovery {
     // ---- internal ----
 
     private void invalidateNeighborCache(Node node, Node removedNeighbor) {
-        for (Node neighborNode : node.getNeighbors()) {
+        for (Node neighborNode : PCAlgorithm.sorted(node.getNeighbors())) {
             NodePair pair = new NodePair(node, neighborNode);
             PCEditMotivation neighborScore = pc.cache.get(pair);
             if (neighborScore != null && neighborScore.getScore() != ALREADY_DONE
@@ -141,7 +141,7 @@ class SkeletonDiscovery {
     private void takeAdjacencySnapshot() {
         stableAdjSnapshot = new HashMap<>();
         for (Node node : pc.net().getNodes()) {
-            stableAdjSnapshot.put(node, new ArrayList<>(node.getNeighbors()));
+            stableAdjSnapshot.put(node, PCAlgorithm.sorted(node.getNeighbors()));
         }
     }
 
@@ -151,12 +151,12 @@ class SkeletonDiscovery {
      * {@code depth} elements and the edge has not yet been removed.
      */
     private boolean hasAnyPairAtDepth(int depth) {
-        for (Node nodeX : pc.net().getNodes()) {
+        for (Node nodeX : pc.sortedNodes()) {
             List<Node> snapshotNeighbors = stableAdjSnapshot.getOrDefault(nodeX, Collections.emptyList());
             if (snapshotNeighbors.size() - 1 < depth) {
                 continue;
             }
-            for (Node nodeY : nodeX.getSiblings()) {
+            for (Node nodeY : PCAlgorithm.sorted(nodeX.getSiblings())) {
                 PCEditMotivation m = pc.cache.get(new NodePair(nodeX, nodeY));
                 if (m == null || m.getScore() != ALREADY_DONE) {
                     return true;
@@ -171,8 +171,8 @@ class SkeletonDiscovery {
      * independence at the given depth using the PC-Stable frozen snapshot.
      */
     private void separationSetsLogic(int adjacencySize) {
-        for (Node nodeX : pc.net().getNodes()) {
-            for (Node nodeY : nodeX.getSiblings()) {
+        for (Node nodeX : pc.sortedNodes()) {
+            for (Node nodeY : PCAlgorithm.sorted(nodeX.getSiblings())) {
                 List<Node> snapshotNeighbors = stableAdjSnapshot.getOrDefault(nodeX, Collections.emptyList());
                 List<Node> adjacencySubset = new ArrayList<>(snapshotNeighbors);
                 adjacencySubset.remove(nodeY);
@@ -222,8 +222,8 @@ class SkeletonDiscovery {
         PCEditMotivation bestMotivation = null;
         LearningEditProposal bestEditProposal = null;
 
-        for (Node nodeX : pc.net().getNodes()) {
-            for (Node nodeY : nodeX.getSiblings()) {
+        for (Node nodeX : pc.sortedNodes()) {
+            for (Node nodeY : PCAlgorithm.sorted(nodeX.getSiblings())) {
                 PCEditMotivation motivation = pc.cache.get(new NodePair(nodeX, nodeY));
                 if (!isCandidateMotivation(motivation, bestMotivation, onlyPositiveEdits)) {
                     continue;

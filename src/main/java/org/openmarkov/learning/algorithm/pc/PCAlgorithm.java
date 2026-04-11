@@ -27,6 +27,8 @@ import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.StringEditMotivation;
 import org.openmarkov.learning.algorithm.pc.util.NodePair;
 
+import org.openmarkov.core.model.graph.Link;
+
 import java.util.*;
 
 /**
@@ -395,6 +397,36 @@ public class PCAlgorithm extends IndependenceRelationsAlgorithm
     CaseDatabase database() { return caseDatabase; }
     boolean checkBlocked(LearningEditProposal p) { return isBlocked(p); }
     boolean checkAllowed(PNEdit e) { return isAllowed(e); }
+
+    /**
+     * Returns the network's nodes sorted alphabetically by name.
+     * Ensures deterministic iteration order regardless of insertion order.
+     */
+    List<Node> sortedNodes() {
+        List<Node> nodes = new ArrayList<>(probNet.getNodes());
+        nodes.sort(Comparator.comparing(Node::getName));
+        return nodes;
+    }
+
+    /**
+     * Returns a sorted copy of the given node list (alphabetical by name).
+     */
+    static List<Node> sorted(List<Node> nodes) {
+        List<Node> copy = new ArrayList<>(nodes);
+        copy.sort(Comparator.comparing(Node::getName));
+        return copy;
+    }
+
+    /**
+     * Returns the network's links sorted by (from-name, to-name).
+     * Ensures deterministic iteration order for orientation phases.
+     */
+    List<Link<Node>> sortedLinks() {
+        List<Link<Node>> links = new ArrayList<>(probNet.getLinks());
+        links.sort(Comparator.comparing((Link<Node> l) -> l.getFrom().getName())
+                .thenComparing(l -> l.getTo().getName()));
+        return links;
+    }
 
     /**
      * Checks whether an orientation is structurally allowed (no cycle creation, plus constraint check).

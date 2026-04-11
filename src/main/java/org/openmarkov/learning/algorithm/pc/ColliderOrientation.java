@@ -47,8 +47,8 @@ class ColliderOrientation {
      * @return a {@link LearningEditProposal} with the orientation(s) to apply, or {@code null} if none found
      */
     LearningEditProposal findEdit(boolean onlyAllowedEdits) {
-        for (Node nodeY : pc.net().getNodes()) {
-            List<Node> neighborsY = new ArrayList<>(nodeY.getNeighbors());
+        for (Node nodeY : pc.sortedNodes()) {
+            List<Node> neighborsY = PCAlgorithm.sorted(nodeY.getNeighbors());
             int n = neighborsY.size();
 
             for (int i = 0; i < n; i++) {
