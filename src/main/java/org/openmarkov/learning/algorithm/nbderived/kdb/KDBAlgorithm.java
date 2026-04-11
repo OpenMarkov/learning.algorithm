@@ -129,7 +129,7 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
         }
 
         if (bestEdit != null) {
-            bestEditProposal = new KDBEditProposal(bestEdit, bestPartialScore);
+            bestEditProposal = LearningEditProposal.of(bestEdit, bestPartialScore);
             markEditAsConsidered(bestEdit);
         }
         return bestEditProposal;

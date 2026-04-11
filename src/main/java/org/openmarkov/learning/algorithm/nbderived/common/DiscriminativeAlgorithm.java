@@ -36,7 +36,7 @@ public abstract class DiscriminativeAlgorithm extends ScoreAndSearchAlgorithm im
      * Manages the history of edits already considered in the current search cycle,
      * preventing the algorithm from re-proposing the same edit.
      */
-    protected final EditHistorySupport editHistory = new EditHistorySupport(new ArrayList<>());
+    protected final EditHistorySupport editHistory = new EditHistorySupport();
 
     /**
      * Metric used to compute the Conditional Mutual Information for each pair of nodes conditioned to the class variable
