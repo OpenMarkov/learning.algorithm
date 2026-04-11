@@ -83,11 +83,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
     
-    @Override
-    protected void buildMaximumWeightSpanningTree() {
-    }
-    
-    
     /**
      * Method to obtain the edit with the highest associated score.
      *
