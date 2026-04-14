@@ -24,7 +24,7 @@ import java.util.Random;
 		metrics = "ConditionalMutualInformation")
 public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
 
-    private final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
+    protected final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
 
     public TreeAugmentedNBAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Metric metric, Double alpha) {
         super(probNet, caseDatabase, metric, alpha);
@@ -37,17 +37,25 @@ public class TreeAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         }
         if (!mwst.isBuilt()) {
             mwst.build(probNet, metric, getNonRootNodes());
-            Variable randomRoot = getNonRootVariables().get(
-                    new Random().nextInt(getNonRootVariables().size()));
+            Variable randomRoot = getRandomVariable();
             mwst.redirect(randomRoot, probNet);
         }
         setRelationsForRootVariable();
+
         MaxNumParents maxNumParentsConstraint = new MaxNumParents(2);
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
-    
-    
+
+    /**
+     * Selects a random non-root variable to use as the root for MWST redirect.
+     * Overrideable for testing determinism.
+     */
+    protected Variable getRandomVariable() {
+        return getNonRootVariables().get(new Random().nextInt(getNonRootVariables().size()));
+    }
+
+
     /**
      * Method to obtain the edit with the highest associated score.
      *

@@ -154,7 +154,7 @@ public class TreeAugmentedNBAlgorithmTest {
         }
 
         int getDirectedMWSTSize() {
-            return directedMaxWeightSpanningTree.size();
+            return mwst.getDirectedEdges().size();
         }
     }
 

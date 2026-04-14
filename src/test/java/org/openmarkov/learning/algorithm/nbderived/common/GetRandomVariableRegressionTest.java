@@ -7,12 +7,10 @@ import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.core.model.network.potential.TablePotential;
-import org.openmarkov.learning.core.util.LearningEditProposal;
+import org.openmarkov.learning.algorithm.nbderived.treeaugmentednb.TreeAugmentedNBAlgorithm;
 import org.openmarkov.learning.metric.Metric;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,7 +46,7 @@ public class GetRandomVariableRegressionTest {
         probNet.addNode(classVar, NodeType.CHANCE);
         probNet.addNode(f1, NodeType.CHANCE);
 
-        TestableDA alg = new TestableDA(probNet);
+        TestableTAN alg = new TestableTAN(probNet);
         alg.setClassVariableName("Class");
 
         Variable result = alg.callGetRandomVariable();
@@ -72,7 +70,7 @@ public class GetRandomVariableRegressionTest {
         probNet.addNode(f2, NodeType.CHANCE);
         probNet.addNode(f3, NodeType.CHANCE);
 
-        TestableDA alg = new TestableDA(probNet);
+        TestableTAN alg = new TestableTAN(probNet);
         alg.setClassVariableName("Class");
 
         Set<String> observed = new HashSet<>();
@@ -99,7 +97,7 @@ public class GetRandomVariableRegressionTest {
         probNet.addNode(classVar, NodeType.CHANCE);
         probNet.addNode(f1, NodeType.CHANCE);
 
-        TestableDA alg = new TestableDA(probNet);
+        TestableTAN alg = new TestableTAN(probNet);
         alg.setClassVariableName("Class");
 
         for (int i = 0; i < 50; i++) {
@@ -111,20 +109,14 @@ public class GetRandomVariableRegressionTest {
 
     // --- Testable subclass to expose the protected method ---
 
-    private static class TestableDA extends DiscriminativeAlgorithm {
+    private static class TestableTAN extends TreeAugmentedNBAlgorithm {
 
-        TestableDA(ProbNet probNet) {
+        TestableTAN(ProbNet probNet) {
             super(probNet, null, new NoOpMetric(), 1.0);
         }
 
         Variable callGetRandomVariable() {
             return getRandomVariable();
-        }
-
-        @Override
-        protected LearningEditProposal getOptimalEdit(boolean onlyAllowedEdits,
-                                                       boolean onlyPositiveEdits) {
-            return null;
         }
     }
 

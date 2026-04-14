@@ -189,7 +189,7 @@ public class ForestAugmentedNBAlgorithmTest {
         }
 
         int getMWSTSize() {
-            return maximumWeightSpanningTree.size();
+            return mwst.getUndirectedEdges().size();
         }
 
         Double getAvgCMI() {

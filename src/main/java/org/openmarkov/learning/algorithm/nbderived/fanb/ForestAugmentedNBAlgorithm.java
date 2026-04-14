@@ -25,7 +25,7 @@ import java.util.List;
 		metrics = {"ConditionalMutualInformation", "MutualInformation"})
 public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
 
-    private final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
+    protected final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
 
     /**
      * Maximum allowable degree of feature dependence
