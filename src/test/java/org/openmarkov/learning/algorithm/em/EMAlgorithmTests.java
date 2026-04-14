@@ -79,7 +79,7 @@ public class EMAlgorithmTests {
 	}
     
     @Test
-    public void test() {
+    public void test() throws IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, CannotNormalizePotentialException, NotEvaluableNetworkException.NotApplicableNetwork, ConstraintViolatedException {
 		ProbNet learnedNet = algorithm.parametricLearning();
 		Assertions.assertNotNull(learnedNet);
 		Assertions.assertEquals(4, learnedNet.getNumNodes());
