@@ -2,21 +2,16 @@ package org.openmarkov.learning.algorithm.nbderived.common;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EditHistorySupportTest {
 
-    private List<PNEdit> backingList;
     private EditHistorySupport support;
     private ProbNet probNet;
     private Variable varA;
@@ -24,8 +19,7 @@ public class EditHistorySupportTest {
 
     @BeforeEach
     public void setup() {
-        backingList = new ArrayList<>();
-        support = new EditHistorySupport(backingList);
+        support = new EditHistorySupport();
 
         probNet = new ProbNet();
         varA = new Variable("A", 2);
@@ -45,8 +39,6 @@ public class EditHistorySupportTest {
 
         assertTrue(support.isEditAlreadyConsidered(edit1));
         assertFalse(support.isEditAlreadyConsidered(edit2));
-        assertEquals(1, backingList.size());
-        assertEquals(edit1, backingList.getFirst());
     }
 
     @Test
@@ -59,6 +51,15 @@ public class EditHistorySupportTest {
         support.reset();
 
         assertFalse(support.isEditAlreadyConsidered(edit1));
-        assertTrue(backingList.isEmpty());
+    }
+
+    @Test
+    public void testDuplicateMarkIsIdempotent() {
+        BaseLinkEdit edit = new AddLinkEdit(probNet, varA, varB, true);
+
+        support.markEditAsConsidered(edit);
+        support.markEditAsConsidered(edit);
+
+        assertTrue(support.isEditAlreadyConsidered(edit));
     }
 }

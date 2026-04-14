@@ -21,7 +21,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "K-Dependence bayesian classifier", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "K-Dependence bayesian classifier", discriminative = true, supportsUnobservedVariables = false,
+		metrics = {"ConditionalMutualInformation", "MutualInformation"})
 public class KDBAlgorithm extends DiscriminativeAlgorithm {
     
     
@@ -82,11 +83,6 @@ public class KDBAlgorithm extends DiscriminativeAlgorithm {
         this.probNet.addConstraint(new NoCycle());
         this.probNet.addConstraint(maxNumParentsConstraint);
     }
-    
-    @Override
-    protected void buildMaximumWeightSpanningTree() {
-    }
-    
     
     /**
      * Method to obtain the edit with the highest associated score.

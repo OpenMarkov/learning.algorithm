@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@LearningAlgorithmType(name = "Selective naive bayes", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "Selective naive bayes", discriminative = true, supportsUnobservedVariables = false,
+		metrics = "Accuracy")
 public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
     
     private double currentAccuracy = 0.0;

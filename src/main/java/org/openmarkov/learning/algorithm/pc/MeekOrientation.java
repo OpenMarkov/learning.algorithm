@@ -77,7 +77,7 @@ class MeekOrientation {
      * (unshielded because A and C are not adjacent), contradicting the collider set.
      */
     private LearningEditProposal meekR1(boolean onlyAllowedEdits) {
-        for (Link<Node> link : pc.net().getLinks()) {
+        for (Link<Node> link : pc.sortedLinks()) {
             if (!link.isDirected()) {
                 LearningEditProposal p = meekR1Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
                 if (p != null) return p;
@@ -89,7 +89,7 @@ class MeekOrientation {
     }
 
     private LearningEditProposal meekR1Orient(Node nodeB, Node nodeC, boolean onlyAllowedEdits) {
-        for (Node nodeA : nodeB.getParents()) {
+        for (Node nodeA : PCAlgorithm.sorted(nodeB.getParents())) {
             if (!nodeA.getNeighbors().contains(nodeC)) {
                 LearningEditProposal proposal = buildOrientProposal(nodeB, nodeC, "Meek R1", onlyAllowedEdits);
                 if (proposal != null) return proposal;
@@ -107,7 +107,7 @@ class MeekOrientation {
      * Rationale: orienting C->A instead would create a directed cycle.
      */
     private LearningEditProposal meekR2(boolean onlyAllowedEdits) {
-        for (Link<Node> link : pc.net().getLinks()) {
+        for (Link<Node> link : pc.sortedLinks()) {
             if (!link.isDirected()) {
                 LearningEditProposal p = meekR2Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
                 if (p != null) return p;
@@ -136,7 +136,7 @@ class MeekOrientation {
      * in the path B->A->D<-C, since B and C are not adjacent.
      */
     private LearningEditProposal meekR3(boolean onlyAllowedEdits) {
-        for (Link<Node> link : pc.net().getLinks()) {
+        for (Link<Node> link : pc.sortedLinks()) {
             if (!link.isDirected()) {
                 LearningEditProposal p = meekR3Orient(link.getFrom(), link.getTo(), onlyAllowedEdits);
                 if (p != null) return p;
@@ -151,6 +151,7 @@ class MeekOrientation {
         // Candidates: parents of A that are also undirected siblings of D
         List<Node> candidates = new ArrayList<>(nodeA.getParents());
         candidates.retainAll(nodeD.getSiblings());
+        candidates.sort(Comparator.comparing(Node::getName));
 
         for (int i = 0; i < candidates.size(); i++) {
             Node nodeB = candidates.get(i);
@@ -174,7 +175,7 @@ class MeekOrientation {
      * otherwise orients arbitrarily while preserving acyclicity.
      */
     private LearningEditProposal tryOrientUnorientedWithoutPath(boolean onlyAllowedEdits) {
-        for (Link<Node> link : pc.net().getLinks()) {
+        for (Link<Node> link : pc.sortedLinks()) {
             if (!link.isDirected()) {
                 Node nodeX = link.getFrom();
                 Node nodeZ = link.getTo();

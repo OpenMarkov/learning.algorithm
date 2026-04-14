@@ -16,15 +16,13 @@ import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
+import org.openmarkov.learning.algorithm.nbderived.common.EditHistorySupport;
 import org.openmarkov.learning.algorithm.scoreAndSearch.ScoreAndSearchAlgorithm;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class implements the basic structure of the classic hill climber
@@ -51,10 +49,9 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	protected ProbNet probNet;
 
 	/**
-	 * List with the best edits that have been not been done by the
-	 * algorithm because they violate the ModelNetworkConstraint
+	 * Tracks edits already considered in the current search cycle.
 	 */
-	protected List<PNEdit> lastBestEdits;
+	protected final EditHistorySupport editHistory = new EditHistorySupport();
 
 	// Constructor
 
@@ -77,9 +74,6 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 		super(probNet, caseDatabase, metric, alpha);
 		this.probNet = probNet;
 		this.metric = metric;
-		this.lastBestEdits = new ArrayList<PNEdit>();
-
-		resetHistory();
 	}
 
 	/**
@@ -139,7 +133,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * Resets the edit history so that previously considered edits can be reconsidered.
 	 */
 	protected void resetHistory() {
-		lastBestEdits.clear();
+		editHistory.reset();
 	}
 
 	/**
@@ -148,7 +142,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * @param edit the edit to mark
 	 */
 	protected void markEditAsConsidered(BaseLinkEdit edit) {
-		lastBestEdits.add(edit);
+		editHistory.markEditAsConsidered(edit);
 	}
 
 	/**
@@ -158,7 +152,7 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 * @return true if the edit has already been considered
 	 */
 	protected boolean isEditAlreadyConsidered(BaseLinkEdit edit) {
-		return lastBestEdits.contains(edit);
+		return editHistory.isEditAlreadyConsidered(edit);
 	}
 
 	/**

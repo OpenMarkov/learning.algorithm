@@ -15,31 +15,28 @@ import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
+import org.openmarkov.learning.algorithm.nbderived.common.MaximumWeightSpanningTree;
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
 import java.util.List;
 
 
-@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "Forest augmented naive bayes", discriminative = true, supportsUnobservedVariables = false,
+		metrics = {"ConditionalMutualInformation", "MutualInformation"})
 public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
-    
-    
-    /**
-     * FANB Algorithm
-     */
-    
-    
+
+    private final MaximumWeightSpanningTree mwst = new MaximumWeightSpanningTree();
+
     /**
      * Maximum allowable degree of feature dependence
      */
     protected int kDependence;
-    
-    
+
     /**
      * Threshold to filter class conditioned links between nodes
      */
     protected Double avgCMI;
-    
+
     /**
      * Node that would be used to re-direct the links in the maximum weight spanning tree
      */
@@ -68,8 +65,8 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         if (unconditionedMetric instanceof MutualInformationMetric miMetric) {
             miMetric.setClassVariable(this.classVariableName);
         }
-        if (maximumWeightSpanningTree.isEmpty()) {
-            buildMaximumWeightSpanningTree();
+        if (!mwst.isBuilt()) {
+            mwst.build(probNet, metric, getNonRootNodes());
         }
         avgCMI = avgCMI == null ? computeAveragedConditionalMutualInformation() : avgCMI;
         setRelationsForRootVariable();
@@ -96,7 +93,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
         if (subtreeRoot == null) {
             bestEdit = getBestRootForSubtree();
             subtreeRoot = probNet.getNode(bestEdit.getVariableTo());
-            directedMaxWeightSpanningTree = redirectMaximumWeightSpanningTree(subtreeRoot.getVariable());
+            mwst.redirect(subtreeRoot.getVariable(), probNet);
             bestPartialScore = unconditionedMetric.getScore(bestEdit);
         } else {
             for (Node n1 : nodes) {
@@ -108,7 +105,7 @@ public class ForestAugmentedNBAlgorithm extends DiscriminativeAlgorithm {
                     double addScore = metric.getScore(addLink);
 
                     if ((addScore >= bestPartialScore) && (addScore > avgCMI) && !isEditAlreadyConsidered(addLink)
-                            && ((!onlyAllowedEdits || isAllowed(addLink) && withinMaxWeightSpanningTree(n1.getVariable(), n2.getVariable()))
+                            && ((!onlyAllowedEdits || isAllowed(addLink) && mwst.contains(n1.getVariable(), n2.getVariable()))
                             && (!onlyPositiveEdits || addScore > 0) && !isBlocked(addLink))
                     ) {
                         bestEdit = addLink;

@@ -1,5 +1,7 @@
 package org.openmarkov.learning.algorithm.nbderived.spnb;
 
+import org.openmarkov.core.action.base.ListPNEdit;
+import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.io.database.CaseDatabase;
@@ -11,6 +13,7 @@ import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.learning.core.util.ModelNetUse;
+import org.openmarkov.learning.core.util.ScoreEditMotivation;
 import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
@@ -20,7 +23,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@LearningAlgorithmType(name = "Superparent naive bayes", discriminative = true, supportsUnobservedVariables = false)
+@LearningAlgorithmType(name = "Superparent naive bayes", discriminative = true, supportsUnobservedVariables = false,
+		metrics = "Accuracy")
 public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
     
     
@@ -97,30 +101,34 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
             }
         }
 
-        if (bestParent != null && !orphans.isEmpty() && !this.sameSP) {
+        if (bestParent != null && !orphans.isEmpty()) {
             superParents.add(bestParent);
-            for (Node nodeChild : orphans) {
-                AddLinkEdit addLink = new AddLinkEdit(probNet, bestParent.getVariable(), nodeChild.getVariable(), true);
-                double addScore = metric.getScore(addLink);
+            final Node selectedParent = bestParent;
+            if (this.sameSP) {
+                // sameSP mode: connect bestParent to ALL orphans via a compound edit
+                List<PNEdit> linkEdits = orphans.stream()
+                        .map(orphan -> (PNEdit) new AddLinkEdit(probNet, selectedParent.getVariable(),
+                                orphan.getVariable(), true))
+                        .toList();
+                ListPNEdit compoundEdit = new ListPNEdit(probNet, linkEdits);
+                bestEditProposal = new LearningEditProposal(compoundEdit,
+                        new ScoreEditMotivation(bestPartialScore));
+                orphans.clear();
+                currentAccuracy = bestPartialScore;
+            } else {
+                for (Node nodeChild : orphans) {
+                    AddLinkEdit addLink = new AddLinkEdit(probNet, bestParent.getVariable(), nodeChild.getVariable(), true);
+                    double addScore = metric.getScore(addLink);
 
-                if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
-                        && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
-                        && (addScore > bestPartialScore || !onlyPositiveEdits)
-                ) {
-                    bestEdit = addLink;
-                    bestPartialScore = addScore;
+                    if (!isEditAlreadyConsidered(addLink) && !isBlocked(addLink)
+                            && (!onlyAllowedEdits || addLink.getNodeFrom() == getRootNode() || isAllowed(addLink))
+                            && (addScore > bestPartialScore || !onlyPositiveEdits)
+                    ) {
+                        bestEdit = addLink;
+                        bestPartialScore = addScore;
+                    }
                 }
             }
-        }
-        if (this.sameSP && bestEdit != null) {
-            BaseLinkEdit editForSP = bestEdit;
-            getNonRootNodes().stream()
-                             .filter(n -> !n.getName().equals(editForSP.getVariableTo().getName()))
-                             .map(Node::getVariable)
-                             .forEach(v -> {
-                                 probNet.addLink(editForSP.getVariableTo(), v, true);
-                             });
-            bestEdit = null;
         }
 
         if (bestEdit != null) {

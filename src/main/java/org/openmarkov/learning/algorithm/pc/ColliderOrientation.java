@@ -47,8 +47,8 @@ class ColliderOrientation {
      * @return a {@link LearningEditProposal} with the orientation(s) to apply, or {@code null} if none found
      */
     LearningEditProposal findEdit(boolean onlyAllowedEdits) {
-        for (Node nodeY : pc.net().getNodes()) {
-            List<Node> neighborsY = new ArrayList<>(nodeY.getNeighbors());
+        for (Node nodeY : pc.sortedNodes()) {
+            List<Node> neighborsY = PCAlgorithm.sorted(nodeY.getNeighbors());
             int n = neighborsY.size();
 
             for (int i = 0; i < n; i++) {
@@ -177,14 +177,20 @@ class ColliderOrientation {
     private boolean alreadyConsidered(OrientLinkEdit edit1, OrientLinkEdit edit2) {
         boolean result = false;
         for (COrientLinksEdit compoundDirectLinkEdit : lastCompoundOrientationEdits) {
-            result |= (
-                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)) == 0) && (
-                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)) == 0
+            result = result || (
+                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().findFirst().get()) == 0) && (
+                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                                   .skip(1)
+                                                                                   .findFirst()
+                                                                                   .get()) == 0
                     )
             );
-            result |= (
-                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(1)) == 0) && (
-                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().get(0)) == 0
+            result = result || (
+                    (edit1.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits()
+                                                                            .skip(1)
+                                                                            .findFirst()
+                                                                            .get()) == 0) && (
+                            edit2.compareTo((OrientLinkEdit) compoundDirectLinkEdit.getEdits().findFirst().get()) == 0
                     )
             );
         }
