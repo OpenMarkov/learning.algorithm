@@ -89,7 +89,7 @@ public class SelectiveNBAlgorithm extends DiscriminativeAlgorithm {
             }
         }
         if (bestEdit != null) {
-            bestEditProposal = LearningEditProposal.of(bestEdit, bestPartialScore);
+            bestEditProposal = LearningEditProposal.scored(bestEdit, bestPartialScore);
             markEditAsConsidered(bestEdit);
             currentAccuracy = bestPartialScore;
         }

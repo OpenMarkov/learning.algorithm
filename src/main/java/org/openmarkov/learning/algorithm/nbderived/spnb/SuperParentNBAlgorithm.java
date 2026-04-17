@@ -132,7 +132,7 @@ public class SuperParentNBAlgorithm extends DiscriminativeAlgorithm {
         }
 
         if (bestEdit != null) {
-            bestEditProposal = LearningEditProposal.of(bestEdit, bestPartialScore);
+            bestEditProposal = LearningEditProposal.scored(bestEdit, bestPartialScore);
             markEditAsConsidered(bestEdit);
             orphans.remove(probNet.getNode(bestEdit.getVariableTo()));
             currentAccuracy = bestPartialScore;
