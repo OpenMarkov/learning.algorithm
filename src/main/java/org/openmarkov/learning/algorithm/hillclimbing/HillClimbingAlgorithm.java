@@ -16,12 +16,14 @@ import org.openmarkov.core.io.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
+import org.openmarkov.core.model.network.constraint.MaxNumParents;
 import org.openmarkov.learning.algorithm.nbderived.common.EditHistorySupport;
 import org.openmarkov.learning.algorithm.scoreAndSearch.ScoreAndSearchAlgorithm;
 import org.openmarkov.learning.metric.Metric;
 import org.openmarkov.learning.core.algorithm.LearningAlgorithmType;
 import org.openmarkov.learning.core.util.LearningEditMotivation;
 import org.openmarkov.learning.core.util.LearningEditProposal;
+import org.openmarkov.learning.core.util.ModelNetUse;
 import org.openmarkov.learning.core.util.ScoreEditMotivation;
 
 /**
@@ -53,6 +55,12 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 	 */
 	protected final EditHistorySupport editHistory = new EditHistorySupport();
 
+	/**
+	 * Maximum number of parents allowed for any node. A value of 0 (default)
+	 * means no limit is enforced.
+	 */
+	protected int maxNumParents = 0;
+
 	// Constructor
 
 	/**
@@ -74,6 +82,31 @@ public class HillClimbingAlgorithm extends ScoreAndSearchAlgorithm {
 		super(probNet, caseDatabase, metric, alpha);
 		this.probNet = probNet;
 		this.metric = metric;
+	}
+
+	/**
+	 * Constructs a Hill Climbing learning algorithm instance with a maximum
+	 * number of parents per node.
+	 *
+	 * @param probNet       The probabilistic network to learn
+	 * @param caseDatabase  The database of cases for learning
+	 * @param alpha         Significance level parameter (usage depends on metric)
+	 * @param metric        The scoring metric used to evaluate edits
+	 * @param maxNumParents Maximum number of parents allowed for any node;
+	 *                      a value of 0 means no limit
+	 */
+	public HillClimbingAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Double alpha, Metric metric,
+			int maxNumParents) {
+		this(probNet, caseDatabase, alpha, metric);
+		this.maxNumParents = maxNumParents;
+	}
+
+	@Override
+	public void init(ModelNetUse modelNetUse) {
+		super.init(modelNetUse);
+		if (maxNumParents > 0) {
+			probNet.addConstraint(new MaxNumParents(maxNumParents));
+		}
 	}
 
 	/**
