@@ -30,7 +30,7 @@
         </dependency>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.io.database.excel</artifactId>
+            <artifactId>org.openmarkov.io</artifactId>
             <version>0.3.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
