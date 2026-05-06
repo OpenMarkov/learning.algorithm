@@ -11,7 +11,7 @@ import org.jetbrains.annotations.UnknownNullability;
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.PNEditListener;
 import org.openmarkov.core.action.core.COrientLinksEdit;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;

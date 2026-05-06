@@ -3,7 +3,7 @@ package org.openmarkov.learning.algorithm.nbderived.kdb;
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.constraint.MaxNumParents;
@@ -18,7 +18,6 @@ import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorith
 import org.openmarkov.learning.metric.cmi.mutualInformation.MutualInformationMetric;
 
 import java.util.LinkedList;
-import java.util.List;
 
 
 @LearningAlgorithmType(name = "K-Dependence bayesian classifier", discriminative = true, supportsUnobservedVariables = false,

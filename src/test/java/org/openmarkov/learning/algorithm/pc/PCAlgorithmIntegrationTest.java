@@ -6,7 +6,7 @@ import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.core.COrientLinksEdit;
 import org.openmarkov.core.action.base.linkEdits.OrientLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.graph.Link;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.NodeType;

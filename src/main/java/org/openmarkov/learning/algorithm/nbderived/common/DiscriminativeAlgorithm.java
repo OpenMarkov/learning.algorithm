@@ -2,7 +2,7 @@ package org.openmarkov.learning.algorithm.nbderived.common;
 
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.learning.algorithm.naivebayes.IDiscriminativeBayes;

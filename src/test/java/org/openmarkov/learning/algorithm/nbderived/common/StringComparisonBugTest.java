@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
@@ -99,7 +100,7 @@ public class StringComparisonBugTest {
 
         KDBAlgorithm kdb = new KDBAlgorithm(
                 probNet,
-                new org.openmarkov.core.io.database.CaseDatabase(
+                new CaseDatabase(
                         List.of(classVar, f1, f2),
                         new int[][]{{0, 0, 0}, {1, 1, 1}}),
                 conditioned, unconditioned, 1.0, 1);
@@ -119,7 +120,7 @@ public class StringComparisonBugTest {
 
         KDBAlgorithm kdb = new KDBAlgorithm(
                 probNet,
-                new org.openmarkov.core.io.database.CaseDatabase(
+                new CaseDatabase(
                         List.of(classVar, f1, f2),
                         new int[][]{{0, 0, 0}, {1, 1, 1}}),
                 conditioned, unconditioned, 1.0, 1);

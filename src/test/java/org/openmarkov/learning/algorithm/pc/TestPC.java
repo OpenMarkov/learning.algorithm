@@ -1,14 +1,12 @@
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;
-import org.openmarkov.core.action.base.PNEdit;
 import org.openmarkov.learning.algorithm.pc.PCAlgorithm;
 import org.openmarkov.learning.algorithm.pc.independencetester.IndependenceTester;
 import org.openmarkov.learning.core.util.LearningEditProposal;
 import org.openmarkov.core.model.network.Node;
 import java.util.List;
-import java.util.Collections;
 
 public class TestPC {
     public static void main(String[] args) throws Exception {

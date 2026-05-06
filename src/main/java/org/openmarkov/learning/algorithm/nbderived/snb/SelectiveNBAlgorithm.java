@@ -3,7 +3,7 @@ package org.openmarkov.learning.algorithm.nbderived.snb;
 import org.openmarkov.core.action.base.linkEdits.AddLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.BaseLinkEdit;
 import org.openmarkov.core.action.base.linkEdits.RemoveLinkEdit;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.constraint.MaxNumParents;
@@ -16,7 +16,6 @@ import org.openmarkov.learning.metric.cmi.accuracy.Accuracy;
 import org.openmarkov.learning.algorithm.nbderived.common.DiscriminativeAlgorithm;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
 
 

@@ -9,7 +9,7 @@ package org.openmarkov.learning.algorithm.em;
 
 import org.junit.jupiter.api.*;
 import org.openmarkov.core.exception.*;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.NodeType;
 import org.openmarkov.core.model.network.ProbNet;
 import org.openmarkov.core.model.network.Variable;

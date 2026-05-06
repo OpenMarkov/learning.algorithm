@@ -8,7 +8,7 @@
 package org.openmarkov.learning.algorithm.pc.independencetester;
 
 import org.jetbrains.annotations.NotNull;
-import org.openmarkov.core.io.database.CaseDatabase;
+import org.openmarkov.core.model.database.CaseDatabase;
 import org.openmarkov.core.model.network.Node;
 import org.openmarkov.core.model.network.Variable;
 import org.openmarkov.core.model.network.potential.PotentialRole;
