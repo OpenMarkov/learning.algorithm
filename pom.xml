@@ -4,39 +4,39 @@
 
     <parent>
         <groupId>org.openmarkov</groupId>
-        <artifactId>org.openmarkov</artifactId>
+        <artifactId>root</artifactId>
         <version>0.3.0-SNAPSHOT</version>
-        <relativePath>../org.openmarkov</relativePath>
+        <relativePath>../root</relativePath>
     </parent>
 
-    <artifactId>org.openmarkov.learning.algorithm</artifactId>
+    <artifactId>learning.algorithm</artifactId>
     <version>0.3.0-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.core</artifactId>
+            <artifactId>core</artifactId>
             <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.learning.core</artifactId>
+            <artifactId>learning.core</artifactId>
             <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.learning.metric</artifactId>
+            <artifactId>learning.metric</artifactId>
             <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.io</artifactId>
+            <artifactId>io</artifactId>
             <version>0.3.0-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.openmarkov</groupId>
-            <artifactId>org.openmarkov.inference</artifactId>
+            <artifactId>inference</artifactId>
             <version>0.3.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
