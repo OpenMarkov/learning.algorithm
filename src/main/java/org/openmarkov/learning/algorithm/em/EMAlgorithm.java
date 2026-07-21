@@ -54,6 +54,7 @@ import java.util.concurrent.Callable;
  * {@code getNextEdit}) returns null.
  *
  * @author Iñigo
+ * @author Manuel Arias
  * @version 0.3.0-SNAPSHOT
  * @see <a href=
  * "https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm">EM
@@ -73,14 +74,15 @@ public class EMAlgorithm extends LearningAlgorithm {
      *
      * @param probNet      The probabilistic network to learn parameters for
      * @param caseDatabase The database of cases (with possible missing values)
-     * @param alpha        Dirichlet prior strength parameter (currently unused)
+     * @param alpha        Dirichlet prior strength used by the M-step smoothing
+     *                     {@code theta = (count + alpha * prior) / (parentCount + alpha)};
+     *                     {@code alpha = 0} gives the maximum-likelihood estimate. The prior
+     *                     mean is the network's initial (uniform) CPT.
      */
     public EMAlgorithm(ProbNet probNet, CaseDatabase caseDatabase, Double alpha) {
         super(probNet, caseDatabase, alpha);
-        // TODO: Implement alpha parameter usage for:
-        // - Initializing non-latent variable parameters
-        // - Regularization to prevent overfitting
-        // - Incorporating expert knowledge (Bayesian prior)
+        // TODO: support a non-uniform prior mean. Currently the prior is the initial
+        // (uniform) CPT, so alpha only pulls the estimates toward the uniform distribution.
     }
     
     @Override
@@ -113,7 +115,12 @@ public class EMAlgorithm extends LearningAlgorithm {
     public ProbNet parametricLearning() throws NotEvaluableNetworkException.NotApplicableNetwork, ConstraintViolatedException, IncompatibleEvidenceException.EvidenceIsIncompatibleWithOther, NonProjectablePotentialException, CannotNormalizePotentialException {
         int[][] cases = caseDatabase.getCases();
         List<Variable> variables = caseDatabase.getVariables();
-        
+
+        if (cases.length == 0) {
+            // No data: there is nothing to learn, so leave the network untouched.
+            return probNet;
+        }
+
         // Init sigma
         List<TablePotential> potentials = new ArrayList<>();
         Map<ICIPotential, List<TablePotential>> iciSubpotentials = new HashMap<>();
@@ -130,20 +137,25 @@ public class EMAlgorithm extends LearningAlgorithm {
         int iterations = 0;
         
         do {
-            // Re-create inference algorithm each iteration because ClusterPropagation
-            // copies the network internally; M-step changes to potentials would not
-            // be visible otherwise.
-            HuginPropagation inferenceAlgorithm = new HuginPropagation(expandedNet);
-            inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
-            
             HashMap<Potential, TablePotential> expectedCountsMap = new HashMap<>();
-            
+
             // E-step: compute expected sufficient statistics for each case
             for (int i = 0; i < cases.length; ++i) {
+                // A fresh inference engine per case. ClusterPropagation (StorageLevel.FULL)
+                // caches cluster messages and posteriors and does NOT invalidate them when
+                // new post-resolution evidence is set, so reusing one instance across cases
+                // would return the first case's joint for every case. Recreating it per case
+                // also picks up the M-step changes to the potentials from the previous
+                // iteration (ClusterPropagation copies the network internally).
+                HuginPropagation inferenceAlgorithm = new HuginPropagation(expandedNet);
+                inferenceAlgorithm.setStorageLevel(StorageLevel.FULL);
+                // Compute the joint of every conditional potential once for this case (keyed by
+                // its conditioned variable). Calling this once per potential instead would repeat
+                // the whole inference O(P) times per potential, i.e. O(P^2) per case.
+                Map<Variable, TablePotential> caseJointProbabilities =
+                        new JointProbabilityCalculator(variables, cases[i], inferenceAlgorithm, expandedNet).call();
                 for (Potential potential : potentials) {
-                    TablePotential jointProbability = new JointProbabilityCalculator(variables, cases[i],
-                                                                                     inferenceAlgorithm, expandedNet).call()
-                                                                                                                     .get(potential.getVariable(0));
+                    TablePotential jointProbability = caseJointProbabilities.get(potential.getVariable(0));
                     if (expectedCountsMap.containsKey(potential)) {
                         sum(expectedCountsMap.get(potential), jointProbability);
                     } else {
@@ -168,12 +180,23 @@ public class EMAlgorithm extends LearningAlgorithm {
                 
                 // Calculate new theta (Madsen 2003)
                 for (int i = 0; i < theta.length; ++i) {
-                    theta[i] = (expectedCounts[i] + alpha * p_ijk[i])
-                            / (expectedCountsParents[i / childNumStates] + alpha);
+                    double denominator = expectedCountsParents[i / childNumStates] + alpha;
+                    // A parent configuration never seen in the data (and with no Dirichlet prior,
+                    // alpha=0) has denominator 0. There is nothing to estimate for it, so keep its
+                    // current parameters: dividing 0/0 would write NaN and the next iteration's
+                    // inference would then propagate NaN across the whole CPT.
+                    if (denominator != 0.0) {
+                        theta[i] = (expectedCounts[i] + alpha * p_ijk[i]) / denominator;
+                    }
                 }
             }
             
-            // Compute log-likelihood
+            // Convergence measure: the expected complete-data log-likelihood (the EM
+            // Q-function) evaluated at the updated parameters, sum over cells of
+            // expectedCounts * log(theta). This is the M-step objective, not the observed-data
+            // log-likelihood; it is used only to detect when successive iterations stop
+            // improving. Cells with zero expected count contribute 0 and are skipped (also
+            // avoiding log(0) for parameters legitimately driven to 0 by MLE).
             currentLogLikelihood = 0.0;
             for (TablePotential potential : potentials) {
                 TablePotential expectedCounts = expectedCountsMap.get(potential);
@@ -184,7 +207,9 @@ public class EMAlgorithm extends LearningAlgorithm {
                     }
                 }
             }
-            
+
+            // Stop once the improvement drops below EPSILON. The quantity increases toward
+            // convergence, so a non-positive change (<= EPSILON) also stops the loop.
             converged = (currentLogLikelihood - lastLogLikelihood) <= EPSILON;
             lastLogLikelihood = currentLogLikelihood;
             ++iterations;
@@ -218,7 +243,12 @@ public class EMAlgorithm extends LearningAlgorithm {
             if (potential.getPotentialRole() == PotentialRole.CONDITIONAL_PROBABILITY) {
                 switch (potential) {
                     case UniformPotential uniformPotential -> {
-                        TablePotential newPotential = new TablePotential((TablePotential) potential);
+                        // A UniformPotential is not a TablePotential (sibling types), so it cannot be
+                        // copied by casting. Build an explicit table from its variables/role: the
+                        // TablePotential constructor initialises it to a uniform distribution
+                        // (setUniform()), which is exactly the EM starting point we want.
+                        TablePotential newPotential = new TablePotential(uniformPotential.getVariables(),
+                                                                         uniformPotential.getPotentialRole());
                         potentials.add(newPotential);
                         expandedNet.getNode(potential.getVariable(0)).setPotential(newPotential);
                     }
@@ -328,8 +358,13 @@ public class EMAlgorithm extends LearningAlgorithm {
             for (Potential potential : expandedNet.getPotentials()) {
                 if (potential.getPotentialRole() == PotentialRole.CONDITIONAL_PROBABILITY) {
                     Variable conditioningVariable = potential.getVariable(0);
-                    jointProbabilities.put(conditioningVariable,
-                                           inferenceAlgorithm.getJointProbability(potential.getVariables()));
+                    // getJointProbability returns the joint in the junction-tree cluster's variable
+                    // order, which need not match the CPT's [child, parents] order. Realign it so the
+                    // M-step (which marginalises the child assuming it is the fastest-varying index)
+                    // sums and updates the right cells.
+                    TablePotential jointProbability = inferenceAlgorithm.getJointProbability(potential.getVariables())
+                                                                        .reorder(potential.getVariables());
+                    jointProbabilities.put(conditioningVariable, jointProbability);
                 }
             }
             return jointProbabilities;
